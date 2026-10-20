@@ -1,0 +1,37 @@
+# Credentials / user-specific configuration
+.env
+.env.*
+!.env.example
+*.env
+*.token
+*.p8
+*.p12
+*.mobileprovision
+*.pem
+*.key
+*credentials*.json
+*credentials*.yaml
+*credentials*.yml
+Secrets.swift
+**/Local.xcconfig
+**/device.json
+**/tunnel.json
+.local/
+.private/
+# Build output and local sessions
+build/
+.build/
+.swiftpm/
+DerivedData/
+node_modules/
+*.log
+*.ipa
+*.xcarchive
+*.dSYM/
+*.xcresult/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+__pycache__/
+
+**/client.json

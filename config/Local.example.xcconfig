@@ -1,0 +1,6 @@
+// Replace with your own unique reverse-DNS ID and Apple team identifier.
+PRODUCT_BUNDLE_IDENTIFIER = com.example.yourname.dshremote
+DEVELOPMENT_TEAM = YOURTEAMID
+// Optional APNs (paid developer team and matching App ID required):
+// CODE_SIGN_ENTITLEMENTS = config/Push.entitlements
+// DSH_ENABLE_PUSH = YES

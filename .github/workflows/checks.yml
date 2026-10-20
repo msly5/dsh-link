@@ -1,0 +1,29 @@
+name: checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  bridge-and-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: bridge/package-lock.json
+      - run: npm ci --ignore-scripts --prefix bridge
+      - run: npm test --prefix bridge
+      - run: python3 -m unittest discover -s scripts/tests
+      - run: python3 scripts/check-secrets.py
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      - run: swift test
+      - run: xcodebuild -project DSHRemote.xcodeproj -scheme DSHRemote -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
