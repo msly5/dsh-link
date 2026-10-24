@@ -1,5 +1,7 @@
 # dsh link
 
+**简体中文** · [English](README.en.md)
+
 在 iPhone 和 iPad 上继续 Mac 里的 DSH 会话。
 
 **非官方、面向个人自托管的 iOS 客户端与 macOS 桥接服务。** 任务、模型调用和文件操作都在 Mac 上完成；手机用于发消息、发送图片、查看执行进度、处理审批和回答问题。需要自行安装并登录 DeepSeek Harness 桌面端。本仓库不包含 DSH 桌面软件。
@@ -88,7 +90,7 @@ cp config/Local.example.xcconfig config/Local.xcconfig
 open DSHRemote.xcodeproj
 ```
 
-在 `config/Local.xcconfig` 设置自己的唯一 Bundle ID 和 `DEVELOPMENT_TEAM`，或在 Xcode 的 Signing & Capabilities 中选择自己的 Team。选择 `DSHRemote` scheme 和 iPhone，点击 Run。默认关闭 APNs，普通使用无需配置推送。
+在 `config/Local.xcconfig` 设置自己的唯一 Bundle ID 和 `DEVELOPMENT_TEAM`，或在 Xcode 的 Signing & Capabilities 中选择自己的 Team。选择 `DSHRemote` scheme 和 iPhone / iPad，点击 Run。默认关闭 APNs，普通使用无需配置推送。若通过 TestFlight 安装，可跳过源码构建这一步。
 
 5. **手机连接设置**：填写 `https://dsh.你的域名`、该 Service Token 的 Client ID、Client Secret，先“测试连接”，再“保存”。测试不会保存草稿；保存或清除操作作用于本机 Keychain。Keychain 数据可能在卸载 App 后仍保留，需要移除时先用设置页“清除已保存的连接”。
 
