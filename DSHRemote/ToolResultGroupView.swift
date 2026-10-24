@@ -5,7 +5,7 @@ struct ToolResultGroupView: View {
     let sessionId: String
     let serverURL: URL
     var active = false
-    @State private var expanded = true
+    @State private var expanded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -39,7 +39,7 @@ struct ToolResultGroupView: View {
             let summary = activity.kind == .reasoning ? ExecutionActivity.singleLine(current.text) : activity.summary
             return "正在" + activity.title + " · " + String(summary.prefix(220))
         }
-        return "执行过程 · 共 \(messages.count) 项"
+        return "查看执行过程 · \(messages.count) 项"
     }
 
     private func toggle() {

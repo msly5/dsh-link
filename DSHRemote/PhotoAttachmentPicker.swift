@@ -15,11 +15,11 @@ struct PhotoAttachmentPicker: View {
                      matching: .images, preferredItemEncoding: .current) {
             Group {
                 if loading { ProgressView().tint(Theme.accent) }
-                else { Image(systemName: "photo.badge.plus").font(.body) }
+                else { Image(systemName: "plus").font(.title3) }
             }
-            .foregroundStyle(Theme.accent)
+            .foregroundStyle(Theme.muted)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             .frame(width: 44, height: 44)
-            .background(Theme.faint, in: .rect(cornerRadius: 12))
         }
         .disabled(disabled || loading || images.count >= limits.selectionLimit)
         .accessibilityLabel(loading ? "正在读取图片" : "添加图片")

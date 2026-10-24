@@ -2,7 +2,7 @@
 
 ## 信任边界
 
-dsh remote 面向同一用户的可信手机与 Mac。已授权客户端能够使用 DSH 远程接口，可能执行命令或访问 Mac 文件；它不是按用户隔离的公共代理。不要把一个实例的 Service Token 发给不信任的人。
+dsh link 面向同一用户的可信手机与 Mac。已授权客户端能够使用 DSH 远程接口，可能执行命令或访问 Mac 文件；它不是按用户隔离的公共代理。不要把一个实例的 Service Token 发给不信任的人。
 
 Cloudflare Tunnel 将连接带到 Mac，不独立承担用户鉴权。需要整个主机名的 Access Service Auth 策略；bridge 同时对 HTTP 和 WebSocket 验证 Cloudflare JWT 的签名、issuer、audience、有效期。bridge 固定监听 loopback，不能直接暴露到公网或局域网。公钥验证不是防御本机已被攻陷的边界：同一 Mac 用户本来就能读取 DSH 本地凭证。
 

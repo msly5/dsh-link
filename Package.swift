@@ -8,7 +8,8 @@ let package = Package(
     products: [.library(name: "DSHRemoteCore", targets: ["DSHRemoteCore"])],
     targets: [
         .target(name: "DSHRemoteCore", path: "DSHRemote", exclude: [
-            "Assets.xcassets", "ChatView.swift", "Components.swift", "DSHRemoteApp.swift",
+            "SessionActionRow.swift",
+            "Assets.xcassets", "QRCodeScannerView.swift", "NavigationRowButtonStyle.swift", "SidebarContainer.swift", "DesignPreview.swift", "SessionSidebar.swift", "ConversationWelcome.swift", "SessionBrowser.swift", "WorkspaceBrowser.swift", "ChatView.swift", "Components.swift", "DSHRemoteApp.swift",
             "LocalImageView.swift", "ChatImageView.swift", "PhotoAttachmentPicker.swift", "ImagePreview.swift", "PendingImageStrip.swift",
             "ModelPickerView.swift", "NewSessionView.swift", "PushSupport.swift", "QuestionCard.swift", "ToolResultGroupView.swift", "ExecutionRow.swift", "MarkdownTableView.swift", "MarkdownTableLayout.swift",
             "PrimaryButtonStyle.swift", "IconButtonStyle.swift", "BrandMark.swift", "ConnectionCard.swift", "SessionRowView.swift", "ChatComposer.swift", "ContextGauge.swift", "MessageRow.swift", "ApprovalCard.swift", "RichText.swift", "SessionListView.swift", "SettingsView.swift", "Theme.swift", "WSLogDelegate.swift",

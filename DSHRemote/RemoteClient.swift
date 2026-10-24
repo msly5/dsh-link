@@ -2,6 +2,7 @@ import Foundation
 
 struct RemoteError: LocalizedError {
     let message: String
+    var code: String? = nil
     var errorDescription: String? { message }
 }
 
@@ -64,7 +65,7 @@ actor RemoteClient {
             if message.contains("does not support image input") {
                 throw RemoteError(message: "当前模型不支持图片，请切换到支持图片的模型后重试。")
             }
-            throw RemoteError(message: message)
+            throw RemoteError(message: message, code: err?["code"] as? String)
         }
         return result["value"] ?? [:]
     }
@@ -87,6 +88,17 @@ actor RemoteClient {
         let value = try await call("session/list", args: ["_request": [:]], baseURL: baseURL, credentials: credentials)
         let data = try JSONSerialization.data(withJSONObject: value)
         return try JSONDecoder().decode(SessionListValue.self, from: data).items
+    }
+
+    func setSessionArchived(_ sessionId: String, archived: Bool, stopActivity: Bool = false,
+                            baseURL: URL? = nil) async throws -> [String] {
+        guard !sessionId.isEmpty else { throw RemoteError(message: "会话标识不能为空") }
+        var request: [String: Any] = ["sessionId": sessionId]
+        if archived && stopActivity { request["stopActivity"] = true }
+        let value = try await call(archived ? "workspace/archiveSession" : "workspace/unarchiveSession",
+                                   args: ["request": request], baseURL: baseURL)
+        let result = try JSONDecoder().decode(WorkspaceArchiveValue.self, from: JSONSerialization.data(withJSONObject: value))
+        return result.archivedSessionIds
     }
 
     func prompt(sessionId: String, text: String, images: [ImageAttachment] = [], requestId: String = UUID().uuidString) async throws {

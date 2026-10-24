@@ -1,23 +1,29 @@
-# dsh remote
+# dsh link
 
-在 iPhone 上继续 Mac 里的 DSH 会话。
+在 iPhone 和 iPad 上继续 Mac 里的 DSH 会话。
 
 **非官方、面向个人自托管的 iOS 客户端与 macOS 桥接服务。** 任务、模型调用和文件操作都在 Mac 上完成；手机用于发消息、发送图片、查看执行进度、处理审批和回答问题。需要自行安装并登录 DeepSeek Harness 桌面端。本仓库不包含 DSH 桌面软件。
 
-<img src="docs/icon.svg" width="96" alt="dsh remote 终端图标">
+<img src="DSHRemote/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="96" alt="dsh link 黑色鲸鱼图标">
 
-- 深色 SwiftUI 界面；会话、工作区与桌面端共用同一个 DSH 后端。
+- 简洁的 SwiftUI 界面，自动跟随系统浅色 / 深色外观；侧栏切换最近对话与工作区，与桌面端共用同一个 DSH 后端。
+- iPad 宽屏使用工作区 / 会话侧栏与聊天双栏，支持横竖屏；窄窗口自动切换抽屉侧栏，旋转保留当前聊天和输入草稿。
+- 侧栏按桌面工作区展开 / 收起会话；对话列表可按工作区或时间分组。会话菜单支持归档，侧栏“已归档”可查看和恢复，状态同步到桌面端。
 - 流式回复、可折叠的思考与工具执行记录、Markdown、可横向滚动的完整表格。
 - 图片上传与查看；会话历史在设备本地缓存，按服务器和会话分隔。
 - 会话审批、提问及权限选择；可选 APNs 通知。
-- 首次打开手动填写服务器、Cloudflare Service Token Client ID / Secret；凭证保存在设备 Keychain，源码和 App 内没有预置凭证。
+- 首次打开可手动填写或扫描 Mac 二维码导入服务器、Cloudflare Service Token；凭证保存在设备 Keychain，源码和 App 内没有预置凭证。
 - 自带 Mac 端桥接、安装/诊断脚本和 AI 配置指南。
+
+<img src="docs/screens/dsh-link/iphone-home.jpg" width="220" alt="dsh link 实机首页与黑色鲸鱼"> <img src="docs/screens/dsh-link/iphone-sidebar.jpg" width="220" alt="dsh link 实机工作区与会话侧栏"> <img src="docs/screens/dsh-link/iphone-chat.jpg" width="220" alt="dsh link 实机聊天页与完整表格">
+
+截图来自 iPhone 13 Pro 实机，使用 Debug 预览中的虚构数据，不包含真实会话或凭证。界面验证范围见 [UI 验证记录](docs/minimal-ui-verification.md) 和 [iPad 布局记录](docs/ipad-layout.md)。
 
 ## 连接方式
 
 ```mermaid
 flowchart LR
-  A[iPhone · dsh remote] -->|HTTPS / WSS + Service Token| B[Cloudflare Access]
+  A[iPhone · dsh link] -->|HTTPS / WSS + Service Token| B[Cloudflare Access]
   B --> C[Cloudflare Tunnel]
   C -->|HTTP / WS · loopback| D[Mac bridge · 127.0.0.1:3079]
   D -->|校验 Access JWT 后注入本地认证 Cookie| E[DSH desktop host]
@@ -32,7 +38,7 @@ Access 在 Cloudflare 边缘验证手机的 Service Token。Mac 桥接再次验�
 | 项目 | 要求 |
 | --- | --- |
 | Mac | 已安装并运行 DeepSeek Harness，已登录，已有一个可用会话 |
-| iPhone | iOS 17 或更新版本 |
+| iPhone / iPad | iOS / iPadOS 17 或更新版本 |
 | Xcode | 16 或更新版本；当前整理版本用 Xcode 27.1 构建验证 |
 | Node.js | 22 或更新版本，推荐当前 LTS；包含 npm |
 | Python | Python 3，供配置/服务/安全检查脚本使用 |
@@ -46,22 +52,24 @@ Mac 必须保持开机、联网且 DSH 桌面端在运行。手机不需要安�
 
 把这个仓库拉到 Mac，用能访问本机文件和终端的 AI 打开，然后给它这段指令：
 
-> 请阅读此仓库的 AGENTS.md、docs/ai-setup.md 和 docs/cloudflare.md，帮我配置 dsh remote。先检查 Mac 上的 DSH、Node、Xcode 和 cloudflared。我的目标域名是 `<你的域名>`。新建独立的 Tunnel、Access 应用和 Service Auth 策略，使用我明确指定的 Cloudflare 账户和域名。敏感凭证从仓库外的私有文件或安全输入读取，不回显、不写进源码、不提交 Git。完成桥接、隧道和 iOS 构建配置后，分别验证无凭证被拒绝、带凭证的 RPC 与 WebSocket 正常，最后告诉我手机需要填写的字段和私有文件位置。
+> 请阅读此仓库的 AGENTS.md、docs/ai-setup.md 和 docs/cloudflare.md，帮我配置 dsh link。先检查 Mac 上的 DSH、Node、Xcode 和 cloudflared。我的目标域名是 `<你的域名>`。新建独立的 Tunnel、Access 应用和 Service Auth 策略，使用我明确指定的 Cloudflare 账户和域名。敏感凭证从仓库外的私有文件或安全输入读取，不回显、不写进源码、不提交 Git。完成桥接、隧道和 iOS 构建配置后，分别验证无凭证被拒绝、带凭证的 RPC 与 WebSocket 正常，最后告诉我手机需要填写的字段和私有文件位置。
 
 AI 能自动完成本地安装、文件生成、诊断及已授权的 Cloudflare 操作。Cloudflare/Apple 登录、账户选择、付款、手机信任开发者等交互可能仍需你本人完成。**不能仅凭构建成功就宣称已连通。**
 
 ## 快速开始
 
-以下命令均在仓库根目录执行。项目公开前，可以从本地目录直接使用；公开后将你自己的仓库地址替换为 `<repository-url>`。
+有仓库访问权限时（或后续公开后），克隆项目。后续命令均在仓库根目录执行：
 
 ```bash
-git clone <repository-url> dsh-remote
-cd dsh-remote
+git clone https://github.com/msly5/dsh-link.git
+cd dsh-link
 python3 scripts/bootstrap.py
 npm ci --ignore-scripts --prefix bridge
 ```
 
 `bootstrap.py` 只检查工具并在 `~/.config/dsh-remote/bridge.env` 创建模板，不创建云资源、不启动服务，也不会覆盖现有配置。自定义私有目录时可设 `DSH_REMOTE_CONFIG_DIR=/绝对路径`，后续脚本会复用它。
+
+项目现名为 **dsh link**。为兼容已安装的客户端和 Mac 服务，Xcode 工程 `DSHRemote`、既有 Bundle ID、`dshremote://` 扫码链接、`DSH_REMOTE_CONFIG_DIR` 和私有配置目录继续沿用原标识；改名不要求重新填写连接凭证。
 
 1. **先配 Cloudflare**：按 [完整 Cloudflare 配置](docs/cloudflare.md) 创建专用 Service Token、Access 应用、Tunnel 和域名路由。
 2. **配置 Mac 桥接**：在仓库外的 `bridge.env` 填入 Team Domain 和应用 AUD。
@@ -84,6 +92,17 @@ open DSHRemote.xcodeproj
 在 `config/Local.xcconfig` 设置自己的唯一 Bundle ID 和 `DEVELOPMENT_TEAM`，或在 Xcode 的 Signing & Capabilities 中选择自己的 Team。选择 `DSHRemote` scheme 和 iPhone，点击 Run。默认关闭 APNs，普通使用无需配置推送。
 
 5. **手机连接设置**：填写 `https://dsh.你的域名`、该 Service Token 的 Client ID、Client Secret，先“测试连接”，再“保存”。测试不会保存草稿；保存或清除操作作用于本机 Keychain。Keychain 数据可能在卸载 App 后仍保留，需要移除时先用设置页“清除已保存的连接”。
+
+也可以**扫码配置**。先在 Mac 用隐藏输入保存手机专用的 Service Token，再显示本地二维码：
+
+```bash
+python3 scripts/store-secret.py client  # 已有 client.json 时跳过
+npm run pair --prefix bridge
+```
+
+iPhone 打开 **连接设置 → 扫描 Mac 连接二维码**，或用系统相机扫码打开 App。服务器与凭证会自动填入；确认服务器后点“保存”即可连接。拒绝相机权限时仍可手动填写。Mac 窗口 5 分钟后关闭，App 拒绝过期的二维码。
+
+二维码由 macOS 原生 Core Image 在本机内存生成，不启动网页、不请求外部二维码服务、不打印凭证。它包含完整 Service Token，等同凭证，**不要截图、分享或提交到仓库**。过期只限制 App 导入，不会撤销 Token；如泄露，需在 Cloudflare 撤销。可运行 `npm run pair --prefix bridge -- --check` 验证二维码本地生成与识别，不显示二维码。
 
 不要把 Cloudflare API Token、Tunnel Token 或 DSH 登录密钥填到手机上。手机只需要 **Service Token** 的两项凭证。
 
@@ -108,7 +127,7 @@ python3 scripts/store-secret.py client
 node bridge/src/probe.mjs
 ```
 
-探测会检查无凭证请求遭拒绝、认证 HTTP RPC 成功、WebSocket 收到 DSH ready 帧；不输出会话内容或凭证。探测结束可删除仓库外的 `client.json`。手机配置仍需手动填写，不会自动导入该文件。
+探测会检查无凭证请求遭拒绝、认证 HTTP RPC 成功、WebSocket 收到 DSH ready 帧；不输出会话内容或凭证。手机可手动填写或用该私有 `client.json` 生成二维码导入。以后不需要探测或生成二维码时，可删除该私有文件；手机已保存的 Keychain 配置不受影响。
 
 ## 验证与开发
 

@@ -1,0 +1,5 @@
+{
+  "link": "dshremote://configure?data=eyJ2ZXJzaW9uIjoxLCJleHBpcmVzX2F0IjoxNzAwMDAwMzAwLCJzZXJ2ZXJfdXJsIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9kc2giLCJjbGllbnRfaWQiOiJ0ZXN0LWNsaWVudC1pZCIsImNsaWVudF9zZWNyZXQiOiJ0ZXN0LWNsaWVudC1zZWNyZXQifQ",
+  "server": "https://example.com/dsh",
+  "expiresAt": 1700000300
+}

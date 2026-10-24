@@ -1,4 +1,4 @@
-# dsh remote: instructions for AI assistants
+# dsh link: instructions for AI assistants
 
 Read `README.md`, `docs/ai-setup.md`, and `docs/cloudflare.md` before deployment. This repository contains an unofficial iOS client and a local macOS DSH bridge. It does not contain DSH itself or any working credentials.
 

@@ -1,14 +1,15 @@
 {
-  "name": "dsh-remote-bridge",
+  "name": "dsh-link-bridge",
   "version": "0.1.0",
   "private": true,
-  "description": "Local macOS bridge for dsh remote",
+  "description": "Local macOS bridge for dsh link",
   "type": "module",
   "license": "MIT",
   "engines": { "node": ">=22" },
   "scripts": {
     "start": "node src/index.mjs",
     "doctor": "node src/doctor.mjs",
+    "pair": "node src/pair.mjs",
     "test": "node --test"
   },
   "dependencies": { "jose": "^6.1.3", "ws": "^8.18.3", "yaml": "^2.8.1" }

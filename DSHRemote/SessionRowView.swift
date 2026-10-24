@@ -3,44 +3,40 @@ import SwiftUI
 struct SessionRowView: View {
     let session: SessionSummary
     var desktopGroup: String?
+    var compact = false
+    var selected = false
 
+    @ScaledMetric(relativeTo: .body) private var iconWidth = 24.0
     private var project: String {
         guard let cwd = session.cwd else { return "默认工作区" }
         return (cwd as NSString).lastPathComponent
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: session.running == true ? "waveform" : "text.bubble")
-                .font(.body.weight(.medium))
-                .foregroundStyle(session.running == true ? Theme.accent : Theme.violet)
-                .frame(width: 42, height: 42)
-                .background((session.running == true ? Theme.accent : Theme.violet).opacity(0.09), in: .rect(cornerRadius: 13))
-            VStack(alignment: .leading, spacing: 8) {
-                Text(session.title)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Theme.text)
-                    .lineLimit(2)
+        HStack(spacing: 13) {
+            Image(systemName: "bubble.left")
+                .font(.body).foregroundStyle(Theme.muted)
+                .frame(width: iconWidth).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(session.title).font(.body).foregroundStyle(Theme.text)
+                    .lineLimit(compact ? 1 : 2)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 7) {
-                    Image(systemName: "folder").font(.caption)
-                    Text(desktopGroup.map { "桌面 · " + $0 } ?? project).lineLimit(1).truncationMode(.middle)
-                    if session.running == true {
-                        Text("·").foregroundStyle(Theme.muted)
-                        Text("运行中").foregroundStyle(Theme.accent)
-                    }
+                if !compact {
+                    Text(desktopGroup ?? project).font(.caption).foregroundStyle(Theme.muted)
+                        .lineLimit(1).truncationMode(.middle)
                 }
-                .font(.caption).foregroundStyle(Theme.muted)
             }
-            VStack(alignment: .trailing, spacing: 13) {
-                Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(Theme.muted.opacity(0.6))
-                if let date = session.updatedAtDate {
-                    Text(compactRelative(date)).font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
-                }
+            if session.running == true {
+                Image(systemName: "waveform").font(.caption).foregroundStyle(Theme.muted)
+                    .accessibilityLabel("运行中")
+            } else if !compact, let date = session.updatedAtDate {
+                Text(compactRelative(date)).font(.caption).foregroundStyle(Theme.muted).lineLimit(1)
             }
         }
-        .padding(17)
-        .card(radius: 19)
+        .padding(.horizontal, 14).padding(.vertical, compact ? 15 : 17)
+        .frame(minHeight: 52)
+        .background(selected ? Theme.raised.opacity(0.8) : .clear, in: .rect(cornerRadius: 13))
+        .contentShape(.rect)
         .accessibilityElement(children: .combine)
     }
 }

@@ -77,7 +77,7 @@ struct ModelPickerView: View {
             .interactiveDismissDisabled(working)
             .disabled(working)
         }
-        .preferredColorScheme(.dark).tint(Theme.accent)
+        .tint(Theme.accent)
     }
 
     @ViewBuilder
@@ -122,6 +122,9 @@ struct ModelPickerView: View {
     }
 
     private func load() async {
+        #if DEBUG
+        if DesignPreview.enabled { catalog = DesignPreview.catalog; return }
+        #endif
         errorText = nil
         do {
             catalog = try await RemoteClient.shared.modelCatalog()
@@ -135,6 +138,9 @@ struct ModelPickerView: View {
     }
 
     private func select(provider: String, model: String, effort: String?) async {
+        #if DEBUG
+        if DesignPreview.enabled { dismiss(); return }
+        #endif
         guard !working else { return }
         working = true
         defer { working = false }

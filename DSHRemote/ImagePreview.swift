@@ -12,6 +12,6 @@ struct ImagePreview: View {
                 .navigationTitle("图片预览").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button("关闭") { dismiss() } } }
         }
-        .preferredColorScheme(.dark).tint(Theme.accent)
+        .tint(Theme.accent)
     }
 }

@@ -1,6 +1,6 @@
 # 给 AI 的配置执行手册
 
-目标是让一个新用户从干净 clone 得到自己可用的 dsh remote。先读根目录 AGENTS.md；仅通过公开源码无法获得任何人的凭证。
+目标是让一个新用户从干净 clone 得到自己可用的 dsh link。先读根目录 AGENTS.md；仅通过公开源码无法获得任何人的凭证。
 
 ## 需要从本地确认或向用户获取的信息
 
@@ -48,7 +48,7 @@
 - 复制 `config/Local.example.xcconfig` 为被 Git 忽略的 `Local.xcconfig`，填用户自己的 Team / Bundle ID。
 - 默认不开启推送。需要时另读 `push.md`。
 - 先模拟器/无签名构建，再按用户授权在自己的设备签名安装。不要把无签名构建称为真机已安装。
-- 手机填写 **公网 HTTPS URL、Service Token Client ID、Client Secret**。可以告知私有文件位置，由用户本地读取或通过可信 UI 填写；不要将值粘贴进 AI 最终回复。
+- 手机填写 **公网 HTTPS URL、Service Token Client ID、Client Secret**，或在 Mac 运行 `npm run pair --prefix bridge` 显示二维码。它读取仓库外 `0600` 的 `client.json`，不向网页或日志输出凭证。iOS 连接设置可扫码填入，用户确认服务器后保存；系统相机也可打开 `dshremote://configure` 配置链接。不要将真实二维码截图、链接或凭证粘贴进 AI 回复。
 - 验证“测试”不保存、保存后重启可读取、修改服务器不会自动携带旧服务器凭证、清除后回到未配置状态。
 
 ## 最终验收

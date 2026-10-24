@@ -24,17 +24,13 @@ struct NewSessionView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     VStack(alignment: .leading, spacing: 18) {
-                        Image(systemName: "plus.bubble")
-                            .font(.title).foregroundStyle(Theme.accent)
-                            .frame(width: 66, height: 66)
-                            .background(Theme.accent.opacity(0.08), in: .rect(cornerRadius: 21))
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("开始一段新工作").font(.title2.bold()).foregroundStyle(Theme.text)
+                            Text("开始新的对话").font(.system(.title2, design: .serif)).foregroundStyle(Theme.text)
                             Text("在 Mac 上创建会话，随时从手机继续。")
                                 .font(.subheadline).foregroundStyle(Theme.muted).lineSpacing(4)
                         }
                     }
-                    .padding(.top, 24)
+                    .padding(.top, 12)
                     VStack(alignment: .leading, spacing: 14) {
                         Label("桌面工作区", systemImage: "folder")
                             .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.text)
@@ -66,7 +62,7 @@ struct NewSessionView: View {
                         Text(selection.isEmpty ? "填写 Mac 上已有目录，将同步添加为桌面工作区。" : "会话会出现在桌面端的同名工作区，电脑和手机共用聊天记录。")
                             .font(.footnote).foregroundStyle(Theme.muted)
                     }
-                    .padding(20).card()
+                    .padding(.vertical, 12)
                     if let errorText {
                         Label(errorText, systemImage: "exclamationmark.circle")
                             .font(.footnote).foregroundStyle(Theme.warning)
@@ -84,8 +80,8 @@ struct NewSessionView: View {
                 Button { Task { await create() } } label: {
                     HStack(spacing: 9) {
                         if creating { ProgressView().tint(Theme.onAccent) }
-                        else { Image(systemName: "arrow.up.right") }
-                        Text(creating ? "正在创建…" : "创建会话")
+                        else { Image(systemName: "plus") }
+                        Text(creating ? "正在创建…" : "开始对话")
                     }
                 }
                 .buttonStyle(PrimaryButtonStyle()).disabled(!canCreate)
@@ -93,12 +89,12 @@ struct NewSessionView: View {
                 .background(Theme.bg)
             }
             .interactiveDismissDisabled(creating)
-            .navigationTitle("新建会话").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("新建对话").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() }.disabled(creating) }
             }
         }
-        .preferredColorScheme(.dark).tint(Theme.accent)
+        .tint(Theme.accent)
         .task { await loadWorkspaces() }
         .onChange(of: selection) { _, _ in resetCreationId() }
         .onChange(of: path) { _, _ in resetCreationId() }
@@ -107,6 +103,9 @@ struct NewSessionView: View {
     private func resetCreationId() { creationId = "session-" + UUID().uuidString.lowercased() }
 
     private func loadWorkspaces() async {
+        #if DEBUG
+        if DesignPreview.enabled { workspaces = DesignPreview.workspaces; selection = workspaces.first?.id ?? ""; loading = false; return }
+        #endif
         loading = true
         errorText = nil
         defer { loading = false }
@@ -123,6 +122,9 @@ struct NewSessionView: View {
     }
 
     private func create() async {
+        #if DEBUG
+        if DesignPreview.enabled { onCreated(DesignPreview.sessions[0].id); dismiss(); return }
+        #endif
         guard !creating else { return }
         errorText = nil
         creating = true

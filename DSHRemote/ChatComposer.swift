@@ -16,9 +16,7 @@ struct ChatComposer: View {
         stream.connected && !sending && !stream.cancelling
             && (stream.running || (!loadingImages && (!input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !images.isEmpty)))
     }
-
     private var currentPermission: String { stream.sessionPermission ?? stream.permissionPreset }
-
     private var modelText: String {
         let model = stream.sessionModel.isEmpty ? stream.modelLabel : stream.sessionModel
         let name = model.replacingOccurrences(of: "deepseek-", with: "")
@@ -26,42 +24,39 @@ struct ChatComposer: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 6) {
             if !images.isEmpty { PendingImageStrip(images: $images, disabled: sending) }
-            HStack(alignment: .bottom, spacing: 10) {
-                PhotoAttachmentPicker(images: $images, loading: $loadingImages, error: $imageError,
-                                      limits: stream.imageLimits, disabled: sending)
-                TextField("消息内容", text: $input, prompt: Text("告诉 DSH 下一步做什么…").foregroundStyle(Theme.muted), axis: .vertical)
-                    .focused(focus)
-                    .font(.body).foregroundStyle(Theme.text)
-                    .lineLimit(2...6)
-                    .disabled(sending)
-                    .padding(.horizontal, 3).padding(.top, 3)
-                    .accessibilityLabel("消息内容")
-            }
-            if let imageError { Text(imageError).font(.caption).foregroundStyle(Theme.warning) }
+            TextField("消息内容", text: $input, prompt: Text("回复 DSH…").foregroundStyle(Theme.muted), axis: .vertical)
+                .focused(focus).font(.body).foregroundStyle(Theme.text)
+                .lineLimit(1...6).disabled(sending)
+                .padding(.horizontal, 6).padding(.top, 7).padding(.bottom, 4)
+                .accessibilityLabel("消息内容")
+            if let imageError { Text(imageError).font(.footnote).foregroundStyle(Theme.warning) }
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(spacing: 12) {
-                    HStack { modelMenu; Spacer(minLength: 6); permissionMenu }
-                    HStack { usage; Spacer(); sendButton }
+                VStack(spacing: 5) {
+                    HStack { attachmentButton; permissionMenu; Spacer(); usage }
+                    HStack { modelMenu; Spacer(minLength: 6); sendButton }
                 }
             } else {
-                HStack(spacing: 10) {
-                    modelMenu
+                HStack(spacing: 0) {
+                    attachmentButton
                     permissionMenu
-                    Spacer(minLength: 0)
-                    usage
-                    sendButton
+                    usage.padding(.leading, 4)
+                    Spacer(minLength: 4)
+                    modelMenu
+                    sendButton.padding(.leading, 8)
                 }
             }
         }
-        .padding(14)
+        .padding(10)
         .background(Theme.card, in: .rect(cornerRadius: 23))
-        .overlay { RoundedRectangle(cornerRadius: 23).strokeBorder(focus.wrappedValue ? Theme.accent.opacity(0.45) : Theme.stroke) }
-        .shadow(color: Color.black.opacity(0.18), radius: 18, y: 5)
-        .animation(.easeOut(duration: 0.2), value: focus.wrappedValue)
+        .overlay { RoundedRectangle(cornerRadius: 23).strokeBorder(focus.wrappedValue ? Theme.muted.opacity(0.5) : Theme.stroke, lineWidth: 0.9) }
     }
 
+    private var attachmentButton: some View {
+        PhotoAttachmentPicker(images: $images, loading: $loadingImages, error: $imageError,
+                              limits: stream.imageLimits, disabled: sending)
+    }
     private var modelMenu: some View {
         Menu {
             ForEach(stream.modelGroups) { group in
@@ -84,12 +79,11 @@ struct ChatComposer: View {
             Button("模型与思考档位…", action: onModels)
         } label: {
             HStack(spacing: 5) {
-                Image(systemName: "sparkle").foregroundStyle(Theme.accent)
-                Text(stream.sessionEffort.isEmpty ? modelText : "\(modelText) · \(stream.sessionEffort)").lineLimit(1).truncationMode(.middle)
-                Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
+                Text(stream.sessionEffort.isEmpty ? modelText : "\(modelText) · \(stream.sessionEffort)")
+                    .lineLimit(1).truncationMode(.middle)
+                Image(systemName: "chevron.down").font(.caption2)
             }
-            .font(.caption.weight(.medium)).foregroundStyle(Theme.text)
-            .frame(minHeight: 44)
+            .font(.footnote).foregroundStyle(Theme.text).frame(minHeight: 44)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("模型：\(modelText)，思考档位：\(stream.sessionEffort.isEmpty ? "默认" : stream.sessionEffort)")
         }
@@ -102,26 +96,23 @@ struct ChatComposer: View {
                 Button {
                     Task { await stream.setPermission(option.value) }
                 } label: {
-                    if option.value == currentPermission {
-                        Label(permissionLabel(option.value), systemImage: "checkmark")
-                    } else { Text(permissionLabel(option.value)) }
+                    if option.value == currentPermission { Label(permissionLabel(option.value), systemImage: "checkmark") }
+                    else { Text(permissionLabel(option.value)) }
                 }
             }
         } label: {
             Image(systemName: currentPermission == "danger-full-access" ? "shield.lefthalf.filled" : "lock.shield")
-                .font(.body).foregroundStyle(currentPermission == "danger-full-access" ? Theme.warning : Theme.muted)
+                .font(.callout).foregroundStyle(currentPermission == "danger-full-access" ? Theme.warning : Theme.muted)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .frame(width: 44, height: 44)
-                .background(Theme.faint, in: .rect(cornerRadius: 12))
                 .accessibilityLabel("访问权限：\(permissionLabel(currentPermission))")
         }
         .disabled(stream.updatingSelection || stream.permissionOptions.isEmpty || !stream.connected)
     }
 
-    @ViewBuilder
-    private var usage: some View {
+    @ViewBuilder private var usage: some View {
         if let ratio = stream.usageRatio { ContextGauge(ratio: ratio) }
     }
-
     private var sendButton: some View {
         Button {
             if stream.running { Task { await stream.cancel() } }
@@ -129,17 +120,18 @@ struct ChatComposer: View {
         } label: {
             ZStack {
                 if sending || stream.cancelling { ProgressView().tint(Theme.onAccent) }
-                else { Image(systemName: stream.running ? "stop.fill" : "arrow.up").font(.body.weight(.bold)) }
+                else {
+                    Image(systemName: stream.running ? "stop.fill" : "arrow.up").font(.body.weight(.medium))
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                }
             }
             .foregroundStyle(canSend ? Theme.onAccent : Theme.muted)
             .frame(width: 44, height: 44)
-            .background(canSend ? (stream.running ? Theme.warning : Theme.accent) : Theme.raised, in: .rect(cornerRadius: 14))
+            .background(canSend ? Theme.accent : Theme.code, in: .circle)
         }
-        .buttonStyle(.plain)
-        .disabled(!canSend)
+        .buttonStyle(.plain).disabled(!canSend)
         .accessibilityLabel(stream.running ? "停止生成" : "发送消息")
     }
-
     private func permissionLabel(_ value: String) -> String {
         switch value {
         case "read-only": "只读"

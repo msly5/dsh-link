@@ -569,3 +569,19 @@ final class ChatStream: ObservableObject {
         return byID.values.sorted { $0.seq == $1.seq ? $0.id > $1.id : $0.seq < $1.seq }
     }
 }
+
+#if DEBUG && canImport(UIKit)
+extension ChatStream {
+    func loadDesignPreview() {
+        messages = DesignPreview.messages
+        connected = true
+        running = false
+        modelLabel = "DeepSeek"
+        sessionModel = "DeepSeek"
+        sessionEffort = ""
+        usageRatio = 0.22
+        permissionOptions = []
+        errorText = nil
+    }
+}
+#endif

@@ -21,18 +21,13 @@ struct MessageRow: View {
                                 .foregroundStyle(Theme.text)
                                 .textSelection(.enabled)
                                 .padding(.horizontal, 17).padding(.vertical, 14)
-                                .background(Theme.violet.opacity(0.13), in: .rect(cornerRadius: 20))
-                                .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(Theme.violet.opacity(0.15)) }
+                                .background(Theme.code, in: .rect(cornerRadius: 19))
                         }
                     }
                 }
                 .padding(.vertical, 4)
             case .assistant:
                 VStack(alignment: .leading, spacing: 13) {
-                    HStack(spacing: 8) {
-                        BrandMark(size: 24)
-                        Text("DSH").font(.caption.weight(.semibold)).foregroundStyle(Theme.accent)
-                    }
                     RichText(text: message.text, anchorPrefix: message.id)
                         .font(.body).lineSpacing(5)
                         .foregroundStyle(Theme.text)

@@ -27,7 +27,7 @@ if a.action == 'uninstall':
         if file.exists():
             subprocess.run(['launchctl','bootout',domain,str(file)],check=False,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             file.unlink()
-    print('Removed dsh remote LaunchAgents; private configuration and DSH are preserved.')
+    print('Removed dsh link LaunchAgents; private configuration and DSH are preserved.')
     raise SystemExit(0)
 node = shutil.which('node'); cloudflared = shutil.which('cloudflared')
 if not node or not cloudflared: raise SystemExit('Install Node.js >=22 and cloudflared first.')

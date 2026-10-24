@@ -2,9 +2,9 @@
 
 本项目是社区独立开发的非官方客户端，与 DeepSeek 无隶属或赞助关系。DeepSeek、DSH 及其商标和桌面软件归其各自权利人所有，不属于本仓库 MIT 许可范围。
 
-仓库只包含自行编写的 iOS 客户端和 Mac 桥接代码，不分发 DSH 桌面程序、app.asar、DSH 依赖包、登录凭证或 DSH 官方图标。用户需要自行安装并登录桌面软件，遵守其适用条款。
+仓库包含自行编写的 iOS 客户端和 Mac 桥接代码，不分发 DSH 桌面程序、app.asar、DSH 依赖包或登录凭证。用户需要自行安装并登录桌面软件，遵守其适用条款。
 
-App 图标为本项目自绘终端图形，源文件见 `docs/icon.svg`。
+当前私人测试版本按用户要求使用取自本机 DeepSeek Harness 的黑色鲸鱼图标，文件见 `DSHRemote/Assets.xcassets/AppIcon.appiconset/AppIcon.png`。该图标及相关商标归原权利人所有，不属于本项目 MIT 许可范围；此处不授予其再分发或商标使用权。原自绘终端图标保留在 `docs/icon.svg`。
 
 桥接通过 npm 安装以下依赖（精确版本及完整依赖关系见 `bridge/package-lock.json`）：
 

@@ -2,6 +2,12 @@ import SwiftUI
 
 struct ChatView: View {
     let session: SessionSummary
+    private let onSidebar: (() -> Void)?
+    private let sidebarVisible: Bool
+    private let archived: Bool
+    private let restoring: Bool
+    private let canRestore: Bool
+    private let onRestore: (() -> Void)?
     @StateObject private var stream: ChatStream
     @State private var input = ""
     @State private var sending = false
@@ -19,8 +25,15 @@ struct ChatView: View {
     @State private var scrolledInitially = false
     @State private var scrollHeight: CGFloat = 0
 
-    init(session: SessionSummary) {
+    init(session: SessionSummary, onSidebar: (() -> Void)? = nil, sidebarVisible: Bool = false, archived: Bool = false,
+         restoring: Bool = false, canRestore: Bool = true, onRestore: (() -> Void)? = nil) {
         self.session = session
+        self.onSidebar = onSidebar
+        self.sidebarVisible = sidebarVisible
+        self.archived = archived
+        self.restoring = restoring
+        self.canRestore = canRestore
+        self.onRestore = onRestore
         let server = AppConfig.baseURL
         serverURL = server
         _stream = StateObject(wrappedValue: ChatStream(sessionId: session.sessionId, running: session.running == true, baseURL: server))
@@ -29,20 +42,27 @@ struct ChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            Rectangle()
-                .fill(Theme.stroke)
-                .frame(height: 0.5)
             messageList
         }
         .background(Theme.bg)
         .safeAreaInset(edge: .bottom, spacing: 0) { bottomArea }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showModels, onDismiss: {
+            #if DEBUG
+            if DesignPreview.enabled { return }
+            #endif
             Task { await stream.refreshSessionMeta() }
         }) {
             ModelPickerView(sessionId: session.sessionId)
         }
         .task(id: scenePhase) {
+            #if DEBUG
+            if DesignPreview.enabled {
+                stream.loadDesignPreview()
+                if ProcessInfo.processInfo.arguments.contains("--show-models") { showModels = true }
+                return
+            }
+            #endif
             guard scenePhase == .active else { stream.disconnect(); return }
             await stream.restoreCachedMessages()
             guard !Task.isCancelled else { return }
@@ -61,15 +81,19 @@ struct ChatView: View {
     // MARK: - 头部
 
     private var header: some View {
-        HStack(spacing: 12) {
-            Button("返回会话列表", systemImage: "chevron.left") { dismiss() }
+        HStack(spacing: 6) {
+            Button(onSidebar == nil ? "返回对话" : sidebarVisible ? "隐藏侧栏" : "打开侧栏",
+                   systemImage: onSidebar == nil ? "chevron.left" : sidebarVisible ? "sidebar.left" : "line.3.horizontal") {
+                inputFocused = false
+                if let onSidebar { onSidebar() } else { dismiss() }
+            }
                 .labelStyle(.iconOnly).buttonStyle(IconButtonStyle())
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(session.title).font(.headline).foregroundStyle(Theme.text).lineLimit(1)
                 HStack(spacing: 6) {
                     Circle().fill(stream.connected ? Theme.accent : Theme.warning).frame(width: 5, height: 5)
-                    Text(stream.running ? "正在执行" : stream.connected ? "Mac 已连接" : "正在连接 Mac")
-                        .font(.caption).foregroundStyle(Theme.muted)
+                    Text(archived ? "已归档" : stream.running ? "正在执行" : stream.connected ? "Mac 已连接" : "正在连接 Mac")
+                        .font(.caption).foregroundStyle(Theme.muted).lineLimit(1).layoutPriority(1)
                     if let cwd = session.cwd {
                         Text("·").foregroundStyle(Theme.muted)
                         Text((cwd as NSString).lastPathComponent)
@@ -81,8 +105,8 @@ struct ChatView: View {
             Button("模型设置", systemImage: "slider.horizontal.3") { showModels = true }
                 .labelStyle(.iconOnly).buttonStyle(IconButtonStyle())
         }
-        .padding(.horizontal, Theme.Space.screen)
-        .padding(.top, 6).padding(.bottom, 15)
+        .padding(.horizontal, 10)
+        .padding(.top, 5).padding(.bottom, 8)
         .background(Theme.bg)
     }
 
@@ -91,7 +115,7 @@ struct ChatView: View {
     private var messageList: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 22) {
+                LazyVStack(alignment: .leading, spacing: 24) {
                     if stream.hasMoreHistory {
                         Button {
                             Task { await stream.loadMore() }
@@ -133,9 +157,8 @@ struct ChatView: View {
                     if !stream.liveText.isEmpty {
                         VStack(alignment: .leading, spacing: 13) {
                             HStack(spacing: 8) {
-                                BrandMark(size: 24)
-                                Text("DSH").font(.caption.weight(.semibold)).foregroundStyle(Theme.accent)
-                                Text("生成中").font(.caption).foregroundStyle(Theme.muted)
+                                ProgressView().controlSize(.mini)
+                                Text("正在回复…").font(.caption).foregroundStyle(Theme.muted)
                             }
                             RichText(text: stream.liveText).font(.body).lineSpacing(5).foregroundStyle(Theme.text)
                         }
@@ -148,6 +171,8 @@ struct ChatView: View {
                 .padding(.horizontal, Theme.Space.screen)
                 .padding(.top, 22)
                 .padding(.bottom, 24)
+                .frame(maxWidth: 760)
+                .frame(maxWidth: .infinity)
                 .onGeometryChange(for: Bool.self) { geometry in
                     geometry.frame(in: .named("chatScroll")).maxY <= scrollHeight + 80
                 } action: { nearBottom = $0 }
@@ -204,7 +229,7 @@ struct ChatView: View {
                 .background(Theme.warning.opacity(0.06), in: .rect(cornerRadius: 14))
             }
 
-            if stream.pendingQuestions != nil || stream.pendingApproval != nil {
+            if !archived && (stream.pendingQuestions != nil || stream.pendingApproval != nil) {
                 ScrollView {
                     VStack(spacing: 10) {
                         if let questions = stream.pendingQuestions {
@@ -235,17 +260,29 @@ struct ChatView: View {
                 }
             }
 
-            ChatComposer(stream: stream, input: $input, images: $images, loadingImages: $loadingImages, imageError: $imageError,
-                         sending: sending, focus: $inputFocused,
-                         onSend: send, onModels: { showModels = true })
+            if archived {
+                VStack(spacing: 12) {
+                    Label("会话已归档，恢复后可以继续对话。", systemImage: "archivebox")
+                        .font(.subheadline).foregroundStyle(Theme.muted)
+                    Button(restoring ? "正在恢复…" : "恢复会话") { onRestore?() }
+                        .buttonStyle(PrimaryButtonStyle()).disabled(restoring || !canRestore)
+                }.padding(.vertical, 8)
+            } else {
+                ChatComposer(stream: stream, input: $input, images: $images, loadingImages: $loadingImages, imageError: $imageError,
+                             sending: sending, focus: $inputFocused,
+                             onSend: send, onModels: { showModels = true })
+            }
         }
-        .padding(.horizontal, Theme.Space.screen)
-        .padding(.top, 12).padding(.bottom, 10)
+        .padding(.horizontal, 16)
+        .padding(.top, 8).padding(.bottom, 8)
         .frame(maxWidth: 760).frame(maxWidth: .infinity)
         .background(Theme.bg.opacity(0.98))
     }
 
     private func send() {
+        #if DEBUG
+        if DesignPreview.enabled { return }
+        #endif
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard (!text.isEmpty || !images.isEmpty), !sending, !loadingImages, stream.connected else { return }
         let attachments = images

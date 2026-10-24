@@ -24,7 +24,7 @@ node --version
 
 在 Zero Trust 的 **Access controls → Service credentials → Service Tokens** 创建 Service Token：
 
-- 名称：例如 `dsh-remote-iphone`。
+- 名称：例如 `dsh-link-iphone`。
 - 到期时间：选择你能管理的期限，并记下续期日期。
 - 安全保存返回的 **Client ID** 和 **Client Secret**；Secret 通常仅在创建时展示，丢失后应轮换，不能从仓库找回。
 
@@ -40,10 +40,10 @@ node --version
 
 | 字段 | 填写 |
 | --- | --- |
-| Application name | `dsh remote` |
+| Application name | `dsh link` |
 | Public hostname / Domain | `dsh.example.com` |
 | Path | 留空，覆盖整个域名的所有路径 |
-| Policy name | `dsh remote iPhone` |
+| Policy name | `dsh link iPhone` |
 | Policy action | **Service Auth** |
 | Include selector | **Service Token** |
 | Include value | 第 2 步创建的特定 token |
@@ -74,7 +74,7 @@ chmod 600 ~/.config/dsh-remote/bridge.env
 
 在 Tunnels 创建 **Cloudflared** 类型的远程管理 Tunnel：
 
-1. 名称建议 `dsh-remote`。每个自托管用户创建自己的 Tunnel。
+1. 名称建议 `dsh-link`。每个自托管用户创建自己的 Tunnel。
 2. 安装页会显示带 `--token ...` 的运行命令。只提取其中的 **Tunnel Token**，不要将整条含 token 的命令贴到终端或仓库。
 3. 在仓库根目录执行下面的隐藏输入脚本，粘贴 token，按回车：
 
@@ -131,6 +131,8 @@ node bridge/src/probe.mjs
 验收应包含：无凭证 HTTP 被 401/403 拒绝；携带该 Service Token 的 DSH RPC 成功；认证 WebSocket 收到 ready 帧。脚本拒绝 HTTP 重定向，不会把凭证交给跳转目标。不要把日志中没有报错当成全部验证通过。
 
 手机中填入公网 URL、Service Token Client ID / Secret，点“测试连接”再“保存”。尝试打开桌面已有会话、发送一条消息，再在手机选择桌面工作区创建会话，确认桌面端可见。
+
+已有私有 `client.json` 时可用 `npm run pair --prefix bridge` 显示 Mac 本地二维码。iOS 打开“连接设置 → 扫描 Mac 连接二维码”，识别后确认服务器并保存；也支持系统相机扫码打开 App。二维码含 Service Token，只在可信设备间使用，不要截图分享；5 分钟后 App 拒绝导入，但这不会撤销 Cloudflare Token。生成窗口仅在本机显示，无需修改 Access 策略或添加公网配对接口。
 
 ## 6. 常驻与运维
 

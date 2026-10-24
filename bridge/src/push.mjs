@@ -27,7 +27,7 @@ export function createPush(config, target) {
     try { device = JSON.parse(fs.readFileSync(deviceFile, 'utf8')); } catch { return; }
     if (!/^[a-f0-9]{64,200}$/.test(device.token)) return;
     // Do not put command arguments, questions, source code or results onto the lock screen.
-    const payload = JSON.stringify({ aps: { alert: { title: 'dsh remote', body: kind === 'approval' ? '有一项操作需要确认。' : '有一个问题等待回答。' }, sound: 'default' }, sessionId, kind });
+    const payload = JSON.stringify({ aps: { alert: { title: 'dsh link', body: kind === 'approval' ? '有一项操作需要确认。' : '有一个问题等待回答。' }, sound: 'default' }, sessionId, kind });
     const client = http2.connect(environment === 'production' ? 'https://api.push.apple.com' : 'https://api.sandbox.push.apple.com');
     client.on('error', () => client.destroy());
     client.setTimeout(15_000, () => client.destroy());
