@@ -6,6 +6,10 @@
 
 <img src="DSHRemote/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="96" alt="dsh link 黑色鲸鱼图标">
 
+**公开测试：[通过 TestFlight 安装 dsh link](https://testflight.apple.com/join/KqMhXcHS)**
+
+iPhone / iPad 先安装 TestFlight，再打开链接加入测试。Mac 桥接与连接配置仍需按下文完成。
+
 - 简洁的 SwiftUI 界面，自动跟随系统浅色 / 深色外观；侧栏切换最近对话与工作区，与桌面端共用同一个 DSH 后端。
 - iPad 宽屏使用工作区 / 会话侧栏与聊天双栏，支持横竖屏；窄窗口自动切换抽屉侧栏，旋转保留当前聊天和输入草稿。
 - 侧栏按桌面工作区展开 / 收起会话；对话列表可按工作区或时间分组。会话菜单支持归档，侧栏“已归档”可查看和恢复，状态同步到桌面端。
