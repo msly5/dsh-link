@@ -45,6 +45,12 @@ struct SessionListView: View {
     }
     private var activeSessions: [SessionSummary] { sessions.filter { !archivedSessionIDs.contains($0.id) } }
     private var archiveActionsEnabled: Bool { updatingSessionID == nil && workspaces != nil && workspaceError == nil }
+    private var archiveConfirmationPresented: Binding<Bool> {
+        Binding(get: { pendingArchive != nil }, set: { if !$0 { pendingArchive = nil } })
+    }
+    private var archiveErrorPresented: Binding<Bool> {
+        Binding(get: { archiveError != nil }, set: { if !$0 { archiveError = nil } })
+    }
     var body: some View {
         SidebarContainer(isPresented: $sidebarOpen, isExpandedLayout: $expandedLayout) {
             SessionSidebar(sessions: activeSessions, workspaces: workspaces, archivedCount: archivedSessionIDs.count,
@@ -94,12 +100,12 @@ struct SessionListView: View {
         .onReceive(NotificationCenter.default.publisher(for: .dshOpenSession)) { note in
             if let id = note.object as? String { openSession(id: id); dismissSidebarIfNeeded() }
         }
-        .confirmationDialog("归档并停止会话？", item: $pendingArchive) { session in
+        .confirmationDialog("归档并停止会话？", isPresented: archiveConfirmationPresented, presenting: pendingArchive) { session in
             Button("停止并归档", role: .destructive) { Task { await setArchived(session, archived: true, stopActivity: true) } }
         } message: { _ in
             Text("这会停止该会话正在运行的任务、子任务及其后台活动。聊天记录会保留，之后可以恢复会话。")
         }
-        .alert("操作未完成", item: $archiveError) { _ in } message: { Text($0) }
+        .alert("操作未完成", isPresented: archiveErrorPresented, presenting: archiveError) { _ in } message: { Text($0) }
     }
 
     private var mainPage: some View {
