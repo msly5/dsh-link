@@ -20,9 +20,8 @@ struct CredentialStore {
         let status = SecItemCopyMatching(request as CFDictionary, &result)
         if status == errSecItemNotFound { return nil }
         guard status == errSecSuccess, let data = result as? Data else { throw failure(status) }
-        let stored = try JSONDecoder().decode(ConnectionProfile.self, from: data)
-        // Revalidate disk contents as well as user input.
-        return try ConnectionProfile(server: stored.serverURL.absoluteString, clientID: stored.clientID, clientSecret: stored.clientSecret)
+        // Decoding revalidates both current and legacy profiles.
+        return try JSONDecoder().decode(ConnectionProfile.self, from: data)
     }
 
     func save(_ profile: ConnectionProfile) throws {

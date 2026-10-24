@@ -31,6 +31,16 @@ final class PairingInvitationTests: XCTestCase {
             XCTAssertThrowsError(try PairingInvitation(scannedValue: link(changes), now: now))
         }
     }
+    func testImportsMacQuickTunnelFixtureWithIndependentAuthentication() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        let data = try Data(contentsOf: root.appendingPathComponent("bridge/test/fixtures/pairing-v2.json"))
+        let fixture = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let invitation = try PairingInvitation(scannedValue: try XCTUnwrap(fixture["link"] as? String), now: now)
+        XCTAssertEqual(invitation.profile.authMode, .quickTunnel)
+        XCTAssertEqual(invitation.profile.serverURL.host, "fixture.trycloudflare.com")
+        XCTAssertEqual(invitation.profile.connectionKey, String(repeating: "a", count: 64))
+        XCTAssertTrue(invitation.profile.clientSecret.isEmpty)
+    }
     func testRejectsOtherQRLinksDuplicateQueriesAndOversizedData() throws {
         let valid = try link()
         for value in ["https://example.com", "dshremote://configure?data=invalid", valid + "&data=other",

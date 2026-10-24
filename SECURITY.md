@@ -2,9 +2,11 @@
 
 ## 信任边界
 
-dsh link 面向同一用户的可信手机与 Mac。已授权客户端能够使用 DSH 远程接口，可能执行命令或访问 Mac 文件；它不是按用户隔离的公共代理。不要把一个实例的 Service Token 发给不信任的人。
+dsh link 面向同一用户的可信手机与 Mac。已授权客户端能够使用 DSH 远程接口，可能执行命令或访问 Mac 文件；它不是按用户隔离的公共代理。不要把一个实例的 Service Token 或连接密钥发给不信任的人。
 
-Cloudflare Tunnel 将连接带到 Mac，不独立承担用户鉴权。需要整个主机名的 Access Service Auth 策略；bridge 同时对 HTTP 和 WebSocket 验证 Cloudflare JWT 的签名、issuer、audience、有效期。bridge 固定监听 loopback，不能直接暴露到公网或局域网。公钥验证不是防御本机已被攻陷的边界：同一 Mac 用户本来就能读取 DSH 本地凭证。
+Cloudflare Tunnel 将连接带到 Mac，不独立承担用户鉴权。Access 模式需要整个主机名的 Service Auth 策略；bridge 同时对 HTTP 和 WebSocket 验证 Cloudflare JWT 的签名、issuer、audience、有效期。Quick Tunnel 模式由独立 bridge 对两个通道验证随机 256 位连接密钥，使用固定长度的恒定时间比较，Access 头不能替代该密钥。两种模式都固定监听 loopback，没有无鉴权模式。同一 Mac 用户本来就能读取 DSH 本地凭证；本项目不防御本机账户失陷。
+
+Quick Tunnel 每次运行生成新地址与密钥，不写入文件、不打印密钥，通过本地进程管道把凭证传给二维码窗口。窗口可由用户查看手动连接信息；手机仍只存 Keychain。关闭运行终端会结束本次 bridge、隧道及已建立连接，重启后旧密钥失效。二维码有效期只控制导入，关闭二维码窗口不会停止隧道；应使用终端 Ctrl+C 停止。Quick Tunnel 没有按设备分配独立密钥，撤销时需重启并让全部设备重新扫码；需要按设备撤销时使用 Access。
 
 JWT 有效期内的重放和已建立的长连接属于需要管理的风险。撤销手机 Service Token 后，新认证请求会由 Access 拒绝；必要时重启 bridge 断开已有连接。不要在不可信机器上运行 bridge。
 
@@ -13,6 +15,7 @@ JWT 有效期内的重放和已建立的长连接属于需要管理的风险。�
 | 类型 | 保存位置 | 用途 |
 | --- | --- | --- |
 | Service Token Client ID / Secret | 手机 Keychain；可选 Mac 私有 `client.json` 仅用于探测 | iPhone → Access |
+| Quick Tunnel 连接密钥 | Mac 进程内存、临时二维码窗口、手机 Keychain | iPhone → Quick Tunnel bridge |
 | Tunnel Token | 仓库外 `tunnel.token` | cloudflared → Cloudflare |
 | Cloudflare API Token | 用户自己的安全存储 | 管理云资源；不是运行时手机凭证 |
 | DSH 浏览器会话密钥 | DSH 自己的 `.credentials.yaml`，只在内存读取 | bridge → DSH |
@@ -21,9 +24,9 @@ JWT 有效期内的重放和已建立的长连接属于需要管理的风险。�
 
 手机连接配置作为一个原子 Keychain 条目存储，使用 `AfterFirstUnlockThisDeviceOnly`，不同步到 iCloud Keychain，不通过设备备份迁移。凭证与精确服务器 URL 绑定；远程传输使用 HTTPS/WSS，客户端不自动跟随重定向，不保存网络 Cookie/URL 缓存。测试连接使用草稿，不会更改保存的连接。
 
-本地会话与图片缓存包含用户内容，位于 App 沙盒；清除连接不等于清除所有会话缓存。不要导出整个 App 容器或把真实聊天截图用于公开演示。代理不记录 RPC 正文、Access 头、DSH Cookie 或图片；诊断工具只打印成功/失败。
+本地会话与图片缓存包含用户内容，位于 App 沙盒；清除连接不等于清除所有会话缓存。不要导出整个 App 容器或把真实聊天截图用于公开演示。代理不记录 RPC 正文、Access / Authorization 头、DSH Cookie 或图片；诊断工具只打印成功/失败。
 
-桥接会把 Cloudflare 认证头从转发请求中剥离，只向 DSH 注入自身生成的本地认证 Cookie；上游 Set-Cookie 不返回手机。错误信息保持通用，避免将本地文件内容或内部异常作为响应输出。
+桥接会把 Cloudflare 认证头和 Quick Tunnel 的 Authorization 头从转发请求中剥离，只向 DSH 注入自身生成的本地认证 Cookie；上游 Set-Cookie 不返回手机。错误信息保持通用，避免将本地文件内容或内部异常作为响应输出。
 
 ## 发布检查
 

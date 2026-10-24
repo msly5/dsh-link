@@ -10,6 +10,7 @@
     "start": "node src/index.mjs",
     "doctor": "node src/doctor.mjs",
     "pair": "node src/pair.mjs",
+    "quick": "node src/quick.mjs",
     "test": "node --test"
   },
   "dependencies": { "jose": "^6.1.3", "ws": "^8.18.3", "yaml": "^2.8.1" }

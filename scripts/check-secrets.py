@@ -14,7 +14,7 @@ RULES = [
     ('github-token', re.compile(rb'\bgh[pousr]_[A-Za-z0-9]{24,}\b|github_pat_[A-Za-z0-9_]{30,}')),
     ('jwt-token', re.compile(rb'\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\b')),
     ('personal-home-path', re.compile(rb'/Users/[A-Za-z0-9_.-]+/')),
-    ('literal-credential', re.compile(rb'''(?i)(?:client[_-]?secret|accessClientSecret|accessClientId|api[_-]?key|api[_-]?token|tunnel[_-]?token)["']?\s*[:=]\s*["']([A-Za-z0-9_+/=.-]{24,})["']''')),
+    ('literal-credential', re.compile(rb'''(?i)(?:client[_-]?secret|accessClientSecret|accessClientId|api[_-]?key|api[_-]?token|tunnel[_-]?token|connection[_-]?key)["']?\s*[:=]\s*["']([A-Za-z0-9_+/=.-]{24,})["']''')),
     ('personal-signing-team', re.compile(rb'\bDEVELOPMENT_TEAM\s*=\s*([A-Z0-9]{10})\s*;')),
 ]
 PLACEHOLDER = re.compile(rb'(?i)example|replace|your|placeholder|test|fixture')

@@ -1,0 +1,5 @@
+{
+  "link": "dshremote://configure?data=eyJ2ZXJzaW9uIjoyLCJleHBpcmVzX2F0IjoxNzAwMDAwMzAwLCJzZXJ2ZXJfdXJsIjoiaHR0cHM6Ly9maXh0dXJlLnRyeWNsb3VkZmxhcmUuY29tIiwiYXV0aF9tb2RlIjoicXVpY2tfdHVubmVsIiwiY29ubmVjdGlvbl9rZXkiOiJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIn0",
+  "server": "https://fixture.trycloudflare.com",
+  "expiresAt": 1700000300
+}

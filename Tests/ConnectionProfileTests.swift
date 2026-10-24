@@ -21,6 +21,30 @@ final class ConnectionProfileTests: XCTestCase {
             XCTAssertThrowsError(try ConnectionProfile(server: url, clientID: id, clientSecret: secret))
         }
     }
+    func testQuickTunnelKeyUsesOnlyURLScopedBearerAuthentication() throws {
+        let key = String(repeating: "a", count: 64)
+        let profile = try ConnectionProfile(server: "https://fixture.trycloudflare.com", clientID: "unused", clientSecret: "unused",
+                                            authMode: .quickTunnel, connectionKey: key)
+        XCTAssertEqual(profile.headers(for: profile.serverURL), ["Authorization": "Bearer " + key])
+        XCTAssertTrue(profile.clientID.isEmpty)
+        XCTAssertTrue(profile.clientSecret.isEmpty)
+        XCTAssertTrue(profile.headers(for: URL(string: "https://other.trycloudflare.com")!).isEmpty)
+        XCTAssertTrue(profile.headers(for: URL(string: "http://fixture.trycloudflare.com")!).isEmpty)
+        for invalid in ["", "short", String(repeating: "g", count: 64), key + "\nInjected"] {
+            XCTAssertThrowsError(try ConnectionProfile(server: profile.serverURL.absoluteString, authMode: .quickTunnel, connectionKey: invalid))
+        }
+        let store = CredentialStore(service: "app.dshremote.test." + UUID().uuidString)
+        defer { try? store.delete() }
+        try store.save(profile)
+        XCTAssertEqual(try store.load(), profile)
+    }
+    func testLegacyKeychainProfileStillDecodesAsAccess() throws {
+        let data = try JSONSerialization.data(withJSONObject: ["serverURL": "https://example.com", "clientID": "test-id", "clientSecret": "test-secret"])
+        let profile = try JSONDecoder().decode(ConnectionProfile.self, from: data)
+        XCTAssertEqual(profile.authMode, .access)
+        XCTAssertEqual(profile.headers(for: profile.serverURL)["CF-Access-Client-Id"], "test-id")
+        XCTAssertTrue(profile.connectionKey.isEmpty)
+    }
     func testUnsavedConnectionTestUsesDraftAndDoesNotChangeSavedProfile() async throws {
         let before = AppConfig.profile
         let draft = try ConnectionProfile(server: "https://draft.example", clientID: "draft-id", clientSecret: "draft-secret")

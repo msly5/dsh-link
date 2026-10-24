@@ -7,6 +7,7 @@ struct Invitation: Decodable {
     let link: String
     let server: String
     let expiresAt: Double
+    let connectionKey: String?
 }
 
 struct PairingWindow: View {
@@ -14,6 +15,8 @@ struct PairingWindow: View {
     let brand: NSImage
     let server: String
     let expiresAt: Date
+    let connectionKey: String?
+    @State private var showManual = false
     var body: some View {
         VStack(spacing: 18) {
             Image(nsImage: brand).resizable().scaledToFit().frame(width: 48, height: 48).accessibilityHidden(true)
@@ -30,6 +33,19 @@ struct PairingWindow: View {
             Text("App → 连接设置 → 扫描 Mac 连接二维码\n识别后确认服务器，点保存即可。")
                 .font(.callout).multilineTextAlignment(.center).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            if let connectionKey {
+                Button("查看手动连接信息") { showManual = true }
+                    .popover(isPresented: $showManual) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("连接方式：Quick Tunnel").font(.headline)
+                            Text("服务器地址").font(.caption)
+                            Text(server).textSelection(.enabled)
+                            Text("连接密钥").font(.caption)
+                            Text(connectionKey).font(.callout.monospaced()).textSelection(.enabled)
+                            Text("仅在此窗口显示。关闭终端后失效。").font(.footnote).foregroundStyle(.secondary)
+                        }.padding(24).frame(width: 420)
+                    }
+            }
             Button("关闭二维码") { NSApplication.shared.terminate(nil) }.keyboardShortcut(.cancelAction)
         }.padding(28).frame(width: 480).background(Color(nsColor: .windowBackgroundColor))
     }
@@ -71,7 +87,7 @@ do {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
         let brand = NSImage(contentsOf: root.appendingPathComponent("DSHRemote/Assets.xcassets/WhaleMark.imageset/WhaleMark.png")) ?? NSImage()
         app.applicationIconImage = brand
-        let view = PairingWindow(image: image, brand: brand, server: invitation.server, expiresAt: expiry)
+        let view = PairingWindow(image: image, brand: brand, server: invitation.server, expiresAt: expiry, connectionKey: invitation.connectionKey)
         let window = NSWindow(contentViewController: NSHostingController(rootView: view))
         window.title = "dsh link · 扫码连接"
         window.styleMask = [.titled, .closable, .miniaturizable]

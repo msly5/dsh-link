@@ -9,10 +9,12 @@ Read `README.md`, `docs/ai-setup.md`, and `docs/cloudflare.md` before deployment
 - Put runtime configuration in an absolute path outside this repository, default `~/.config/dsh-remote/`. Files containing secrets must be `0600`, private directories `0700`.
 - Never print a secret or embed it in command arguments. Read credentials from private files, OS secure storage or hidden input. Do not ask the user to paste secrets into chat.
 - The iOS client stores a single URL-bound connection profile in Keychain. Do not restore compiled `Secrets.swift`, default personal servers, or UserDefaults-based credential storage.
-- Keep the bridge bound to `127.0.0.1`. Require signed Cloudflare JWTs for HTTP and WebSocket upgrades. Do not introduce header-presence or `NO_ACCESS` bypasses.
+- Keep the bridge bound to `127.0.0.1`. Access mode requires signed Cloudflare JWTs for HTTP and WebSocket upgrades. Quick Tunnel mode requires the generated 256-bit connection key on both transports. Do not introduce header-presence or `NO_ACCESS` bypasses.
 - Cloudflare API Token, Tunnel Token, Service Token, DSH local credentials, and APNs signing key are different credentials. Use each only at its intended layer.
 
 ## Deployment workflow
+
+Choose the connection mode first. For a user without a domain, follow the Quick Tunnel section of README.md / README.en.md: install bridge dependencies, run `npm run quick --prefix bridge`, then scan the local QR window using a client with Quick Tunnel support. No Cloudflare account, Zone, Team/AUD, Service Token, Tunnel Token, or LaunchAgent is needed. The runner generates its key only in memory, verifies authenticated public HTTP/WS, and stops the bridge/tunnel on Ctrl+C. Do not write its key to files or print it. Preserve existing Access services. The numbered workflow below is for Access mode with a domain.
 
 1. Inspect installed tools and running DSH. Run `python3 scripts/bootstrap.py`, then `npm ci --ignore-scripts --prefix bridge`.
 2. Determine the user's intended Cloudflare account, Zone, unused hostname, and Team Domain. Read existing resources before any mutation. Do not choose an account based only on a familiar name.

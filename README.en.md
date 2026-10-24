@@ -18,12 +18,21 @@ Install TestFlight on your iPhone or iPad, then open the link to join. You still
 - Streaming replies, collapsible thinking and tool activity, Markdown, and horizontally scrollable tables.
 - Image uploads and previews. Conversation history is cached locally, separated by server and conversation.
 - Action approvals, questions, permission selection, and optional APNs notifications.
-- Enter your server and Cloudflare Service Token manually, or scan a QR code on your Mac. Credentials stay in the device's Keychain; neither the source nor the app contains preconfigured credentials.
+- Choose Cloudflare Access with your own domain or Quick Tunnel without a domain. Enter credentials manually or scan a QR code on your Mac. Credentials stay in the device's Keychain; neither the source nor the app contains preconfigured credentials.
 - Includes the Mac bridge, installation and diagnostic scripts, and an AI-assisted setup guide.
 
 <img src="docs/screens/dsh-link/iphone-home.jpg" width="220" alt="dsh link home screen and black whale"> <img src="docs/screens/dsh-link/iphone-sidebar.jpg" width="220" alt="dsh link workspace and conversation sidebar"> <img src="docs/screens/dsh-link/iphone-chat.jpg" width="220" alt="dsh link chat and table">
 
 ## How it connects
+
+| Method | Own domain required? | Best for |
+| --- | --- | --- |
+| **Quick Tunnel** | **No domain or Cloudflare account needed** | Getting started and temporary remote use; one command and a QR code |
+| **Tunnel + Access** | Yes, with a Cloudflare account | A stable address and separate Service Tokens per device |
+
+**Quick Tunnel is implemented in this repository's source. The current TestFlight build, 1.0 (7), does not include it yet. Build the client from source with the “Quick Tunnel” option.** Both modes use HTTPS/WSS and authenticate requests at the Mac bridge. Quick Tunnel uses an independent connection key.
+
+The diagram below shows Tunnel + Access. For the domain-free option, see “A. No domain: Quick Tunnel” below.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/connection-dark-en.svg">
@@ -44,14 +53,18 @@ The `bridge/` directory is the companion DSH "plugin." It runs as a separate pro
 | Node.js | Version 22 or later; current LTS recommended, including npm |
 | Python | Python 3 for setup, service management, and security scripts |
 | cloudflared | A version supporting `--token-file`, at least `2025.4.0` |
-| Cloudflare | Your own account, a domain managed by Cloudflare, and Zero Trust / Access |
+| Cloudflare | Quick Tunnel needs no account or domain; Access mode needs your own account, domain, and Zero Trust / Access |
 | Apple signing | Your own Apple account/Team for source builds on a device; APNs is optional and needs the appropriate signing capability |
 
 Your Mac must stay awake, online, and running DSH. The phone does not need cloudflared, and no inbound port needs to be exposed on the Mac.
 
 ## Let an AI help you set up
 
-Clone this repository on your Mac and open it with an AI assistant that can access local files and a terminal. Give it this prompt:
+Clone this repository on your Mac and open it with an AI assistant that can access local files and a terminal. **Without a domain**, use this prompt:
+
+> Read AGENTS.md, the Quick Tunnel section of README.en.md, and docs/ai-setup.md. Help me configure dsh link using domain-free Quick Tunnel. Check DSH, Node, cloudflared, and Xcode command-line tools on my Mac. Install bridge dependencies and run npm run quick --prefix bridge to show the local pairing QR code. Preserve any existing domain connection. Do not create Cloudflare accounts, domains, Access applications, or Tunnel Tokens. Do not print or save the connection key. Verify that missing and incorrect keys are rejected and authenticated HTTP RPC and WebSocket connections succeed. Then build the iOS client with Quick Tunnel support and explain how to scan the code and stop the temporary connection.
+
+**For a stable address with your own domain**, use this prompt:
 
 > Read this repository's AGENTS.md, docs/ai-setup.md, and docs/cloudflare.md, and help me set up dsh link. First inspect DSH, Node.js, Xcode, and cloudflared on this Mac. My target hostname is `<your hostname>`. Create a dedicated Tunnel, Access application, and Service Auth policy using the Cloudflare account and domain I explicitly select. Read sensitive credentials from private files outside the repository or secure input. Do not print them, put them in source code, or commit them to Git. Configure the bridge, tunnel, and iOS build settings. Then verify that unauthenticated requests are rejected and authenticated RPC and WebSocket connections work. Finally, tell me which fields to fill in on the phone and where the private configuration files are stored.
 
@@ -64,13 +77,39 @@ Clone the project if you have access to the repository, or after it becomes publ
 ```bash
 git clone https://github.com/msly5/dsh-link.git
 cd dsh-link
-python3 scripts/bootstrap.py
 npm ci --ignore-scripts --prefix bridge
 ```
 
-`bootstrap.py` only checks tools and creates a template at `~/.config/dsh-remote/bridge.env`. It does not create cloud resources, start services, or overwrite existing configuration. To use another private directory, set `DSH_REMOTE_CONFIG_DIR=/absolute/path`; the other scripts use the same variable.
+In Access mode, `bootstrap.py` only checks tools and creates a template at `~/.config/dsh-remote/bridge.env`. It does not create cloud resources, start services, or overwrite existing configuration. To use another private directory, set `DSH_REMOTE_CONFIG_DIR=/absolute/path`; the other scripts use the same variable.
 
 The project is now called **dsh link**. To keep existing clients and Mac services working, it retains the `DSHRemote` Xcode project, existing Bundle ID, `dshremote://` pairing links, `DSH_REMOTE_CONFIG_DIR`, and private configuration directory. The name change does not require you to re-enter connection credentials.
+
+### A. No domain: Quick Tunnel
+
+1. Open DSH on your Mac and sign in. Keep the Mac online. From the repository root, run the command below. If tools are missing and you have Homebrew, first run `brew install node cloudflared`.
+
+```bash
+npm run quick --prefix bridge
+```
+
+2. The command starts a separate loopback bridge (default `127.0.0.1:3080`) and cloudflared, obtains a random `https://….trycloudflare.com` address, and opens a local QR window. It checks public rejection of missing/incorrect keys and authenticated HTTP RPC and WebSocket connectivity. Results contain no conversations or credentials.
+3. Build the iOS client with this feature from source; see step 4 under B below. On the phone, choose **Connection settings → Scan Mac connection QR code**. Scanning selects **Quick Tunnel** and fills in the server and connection key. Tap **Test connection**, then **Save**. No Client ID or Client Secret is needed.
+4. For manual entry, click **查看手动连接信息** in the Mac QR window. Select **Quick Tunnel** on the phone and enter the HTTPS address and 64-character connection key. The QR window closes after five minutes; type `p` and press Return in the running terminal to reopen it, or `r` to recheck public connectivity.
+5. Keep the terminal running. Press **Ctrl+C** to stop this bridge and tunnel. Every launch generates a new address and key, so scan again after restarting. The key stays in Mac process memory, the local QR window, and the phone's Keychain; it is never written to configuration files or logs.
+
+APNs push is not enabled in Quick Tunnel mode. Quick Tunnel needs no `tunnel.token`, `client.json`, Team Domain, or AUD. Do not run `scripts/run-tunnel.sh` or install LaunchAgents for this mode. It runs separately from an existing Access connection. If port 3080 is occupied, use `DSH_QUICK_PORT=3081 npm run quick --prefix bridge`; no existing service is stopped.
+
+Underneath, it runs `cloudflared tunnel --config /dev/null --url http://127.0.0.1:3080`, ignoring existing cloudflared configuration without modifying it. This project's bridge adds a random 256-bit key to authenticate both HTTP and WebSocket requests. Do not point a tunnel directly at DSH's random port. If a key leaks, stop and restart Quick Tunnel to invalidate the old address, key, and open connections.
+
+Quick Tunnels are temporary, have no uptime guarantee, change hostname on recreation, and do not support SSE. This client receives events over WebSocket. Do not add `--allowed-mail`: its interactive browser sign-in does not work with this client. If the initial check fails, verify that your network and DNS can reach `trycloudflare.com`, then enter `r` to retry. A failed check does not mean the connection works. Use Access below for a stable address. See [Cloudflare's Quick Tunnels documentation](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/).
+
+### B. Own domain: Tunnel + Access
+
+First prepare the private configuration template:
+
+```bash
+python3 scripts/bootstrap.py
+```
 
 1. **Configure Cloudflare:** Follow the [Cloudflare setup guide](docs/cloudflare.md) to create a dedicated Service Token, Access application, Tunnel, and hostname route.
 2. **Configure the Mac bridge:** Set the Team Domain and application AUD in `bridge.env` outside the repository.
@@ -108,6 +147,8 @@ The QR code is generated locally in memory using macOS Core Image. It does not o
 Do not enter a Cloudflare API Token, Tunnel Token, or DSH sign-in secret on the phone. The phone only needs the two **Service Token** credentials.
 
 ## Run at login and check connectivity
+
+This section is for Access mode with your own domain. Quick Tunnel runs in the foreground using the command above.
 
 After confirming that manual startup works, stop the foreground bridge and cloudflared processes, then run:
 
@@ -160,7 +201,7 @@ The Swift package runs macOS unit tests for the protocol, conversation cache, im
 
 A connected phone can operate your DSH sessions, which may execute commands or access files on the Mac. Only configure Service Tokens on devices you trust. Issue separate tokens per device, renew them periodically, and revoke tokens for lost devices. This project is intended for personal self-hosting; it is not a service with isolated user accounts.
 
-The client sends credentials only to the configured HTTPS server and rejects automatic redirects. The bridge listens only on loopback, and both HTTP and WebSocket requests require a valid Access JWT. There is no unauthenticated mode. Protect the remote hostname with a correctly configured Access application; do not use a Bypass or Everyone policy.
+The client sends credentials only to the configured HTTPS server and rejects automatic redirects. The bridge listens only on loopback. Access mode validates Access JWTs for both HTTP and WebSocket requests; Quick Tunnel mode validates the independent connection key for both. There is no unauthenticated mode. In Access mode, protect the remote hostname with a correctly configured application; do not use a Bypass or Everyone policy.
 
 Local conversation and image caches contain conversation content. They stay in the app sandbox and are separated by server and conversation. They are not a cloud backup; if the cache is lost, the app reloads data from the same DSH backend. Push notifications are disabled by default. When enabled, lock-screen notifications show only generic approval or question prompts. See [SECURITY.md](SECURITY.md) for more information.
 

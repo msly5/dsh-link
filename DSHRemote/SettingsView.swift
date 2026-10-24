@@ -11,6 +11,8 @@ struct SettingsView: View {
     @State private var server = ""
     @State private var clientID = ""
     @State private var clientSecret = ""
+    @State private var authMode = ConnectionProfile.AuthMode.access
+    @State private var connectionKey = ""
     @State private var testing = false
     @State private var testResult: String?
     @State private var validationError: String?
@@ -33,7 +35,7 @@ struct SettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     Text("连接你的 Mac").font(.system(.title2, design: .serif)).foregroundStyle(Theme.text)
-                    Text("填写你自己的 Cloudflare Access 连接信息。凭证仅保存在本机系统钥匙串中。")
+                    Text("选择域名连接或免域名的 Quick Tunnel，也可以扫描 Mac 二维码。凭证仅保存在本机系统钥匙串中。")
                         .font(.subheadline).foregroundStyle(Theme.muted)
                     Button("扫描 Mac 连接二维码", systemImage: "qrcode.viewfinder") { showScanner = true }
                         .buttonStyle(PrimaryButtonStyle()).disabled(previewing)
@@ -42,18 +44,8 @@ struct SettingsView: View {
                             .font(.footnote).foregroundStyle(Theme.text)
                     }
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("服务器地址").font(.subheadline.bold())
-                        field("https://dsh.example.com", text: $server).keyboardType(.URL)
-                            .accessibilityLabel("服务器地址")
-                        Text("Client ID").font(.subheadline.bold())
-                        field("Service Token Client ID", text: $clientID).accessibilityLabel("Client ID")
-                        Text("Client Secret").font(.subheadline.bold())
-                        SecureField("Service Token Client Secret", text: $clientSecret)
-                            .textContentType(.password).textInputAutocapitalization(.never).autocorrectionDisabled()
-                            .padding(14).background(Theme.code, in: .rect(cornerRadius: 13))
-                            .accessibilityLabel("Client Secret")
-                        Text("这两项来自 Cloudflare 的 Service Token，不是 Cloudflare API Token 或 Tunnel Token。")
-                            .font(.footnote).foregroundStyle(Theme.muted)
+                        ConnectionFields(authMode: $authMode, server: $server, clientID: $clientID,
+                                         clientSecret: $clientSecret, connectionKey: $connectionKey)
                         if let validationError {
                             Label(validationError, systemImage: "exclamationmark.circle").font(.footnote).foregroundStyle(Theme.warning)
                         }
@@ -95,6 +87,8 @@ struct SettingsView: View {
                         server = profile.serverURL.absoluteString
                         clientID = profile.clientID
                         clientSecret = profile.clientSecret
+                        authMode = profile.authMode
+                        connectionKey = profile.connectionKey
                     }
                 } catch { validationError = error.localizedDescription }
                 if let pairingURL { importPairing(pairingURL.absoluteString) }
@@ -106,12 +100,14 @@ struct SettingsView: View {
             .onChange(of: server) { _, _ in
                 clearResult()
                 if let credentialServer, AppConfig.validatedServerURL(server) != credentialServer {
-                    clientID = ""; clientSecret = ""; self.credentialServer = nil
+                    clientID = ""; clientSecret = ""; connectionKey = ""; self.credentialServer = nil
                     pairingMessage = nil
                 }
             }
             .onChange(of: clientID) { _, _ in clearResult() }
             .onChange(of: clientSecret) { _, _ in clearResult() }
+            .onChange(of: connectionKey) { _, _ in clearResult() }
+            .onChange(of: authMode) { _, _ in clearResult() }
             .confirmationDialog("清除连接及钥匙串中的凭证？", isPresented: $confirmClear, titleVisibility: .visible) {
                 Button("清除连接", role: .destructive) {
                     do {
@@ -126,11 +122,6 @@ struct SettingsView: View {
         }.tint(Theme.accent)
     }
 
-    private func field(_ placeholder: String, text: Binding<String>) -> some View {
-        TextField(placeholder, text: text).font(.callout.monospaced())
-            .textInputAutocapitalization(.never).autocorrectionDisabled()
-            .padding(14).background(Theme.code, in: .rect(cornerRadius: 13))
-    }
     private func clearResult() { validationError = nil; testResult = nil }
     private func importPairing(_ value: String) {
         do {
@@ -140,12 +131,15 @@ struct SettingsView: View {
             server = profile.serverURL.absoluteString
             clientID = profile.clientID
             clientSecret = profile.clientSecret
+            authMode = profile.authMode
+            connectionKey = profile.connectionKey
             clearResult()
             pairingMessage = "已填入 \(profile.serverURL.host ?? "Mac") 的连接信息。确认服务器后，点“保存”即可连接。"
         } catch { validationError = error.localizedDescription; pairingMessage = nil }
     }
     private func candidate() throws -> ConnectionProfile {
-        try ConnectionProfile(server: server, clientID: clientID, clientSecret: clientSecret)
+        try ConnectionProfile(server: server, clientID: clientID, clientSecret: clientSecret,
+                              authMode: authMode, connectionKey: connectionKey)
     }
     private func save() {
         do {

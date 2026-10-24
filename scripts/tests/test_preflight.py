@@ -13,6 +13,10 @@ class PreflightTests(unittest.TestCase):
         self.assertNotIn('z'*40,repr(found))
     def test_template_and_test_literals_allowed(self):
         self.assertEqual(list(preflight.findings('example.txt',b'clientSecret="REPLACE_WITH_YOUR_CLIENT_SECRET"')),[])
+    def test_connection_key_is_flagged_without_showing_it(self):
+        found=list(preflight.findings('unsafe.json',b'{"connection_key":"' + b'a'*64 + b'"}'))
+        self.assertTrue(any(rule=='literal-credential' for _,_,rule in found))
+        self.assertNotIn('a'*64,repr(found))
     def test_private_key_detected(self):
         key=b'-----BEGIN '+b'PRIVATE KEY-----\nfixture'
         self.assertTrue(list(preflight.findings('unsafe.txt',key)))

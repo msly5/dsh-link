@@ -8,7 +8,7 @@ let package = Package(
     products: [.library(name: "DSHRemoteCore", targets: ["DSHRemoteCore"])],
     targets: [
         .target(name: "DSHRemoteCore", path: "DSHRemote", exclude: [
-            "SessionActionRow.swift",
+            "SessionActionRow.swift", "ConnectionFields.swift",
             "Assets.xcassets", "QRCodeScannerView.swift", "NavigationRowButtonStyle.swift", "SidebarContainer.swift", "DesignPreview.swift", "SessionSidebar.swift", "ConversationWelcome.swift", "SessionBrowser.swift", "WorkspaceBrowser.swift", "ChatView.swift", "Components.swift", "DSHRemoteApp.swift",
             "LocalImageView.swift", "ChatImageView.swift", "PhotoAttachmentPicker.swift", "ImagePreview.swift", "PendingImageStrip.swift",
             "ModelPickerView.swift", "NewSessionView.swift", "PushSupport.swift", "QuestionCard.swift", "ToolResultGroupView.swift", "ExecutionRow.swift", "MarkdownTableView.swift", "MarkdownTableLayout.swift",

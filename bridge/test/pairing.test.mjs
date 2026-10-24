@@ -10,6 +10,17 @@ test('pairing payload matches the shared Swift protocol fixture', () => {
   const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/pairing-v1.json', import.meta.url)));
   assert.deepEqual(pairingInvitation(client, 1_700_000_000_000), fixture);
 });
+test('Quick Tunnel pairing uses version 2 without Access credentials', () => {
+  const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/pairing-v2.json', import.meta.url)));
+  const key = 'a'.repeat(64);
+  const invitation = pairingInvitation({server_url:'https://fixture.trycloudflare.com', auth_mode:'quick_tunnel', connection_key:key}, 1_700_000_000_000);
+  assert.deepEqual(invitation, {...fixture, connectionKey:key});
+  const payload = JSON.parse(Buffer.from(invitation.link.split('data=')[1], 'base64url'));
+  assert.equal(payload.client_secret, undefined);
+  assert.equal(payload.auth_mode, 'quick_tunnel');
+  assert.throws(() => pairingInvitation({server_url:client.server_url, auth_mode:'quick_tunnel', connection_key:'short'}));
+  assert.throws(() => pairingInvitation({...client, auth_mode:'unknown'}));
+});
 test('rejects insecure, ambiguous or credential-bearing server URLs and header injection', () => {
   for (const server_url of ['http://example.com','https://user:pass@example.com','https://example.com?secret=x','https://example.com#x','invalid']) {
     assert.throws(() => pairingInvitation({...client, server_url}));

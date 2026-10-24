@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { connectionHeaders } from './connection-key.mjs';
 
 const repository = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 
@@ -10,18 +11,16 @@ export function pairingInvitation(client, now = Date.now()) {
   if (server.protocol !== 'https:' || !server.hostname || server.username || server.password || server.search || server.hash) {
     throw new Error('Use an HTTPS server URL without user info, query or fragment.');
   }
-  for (const key of ['client_id', 'client_secret']) {
-    if (typeof client[key] !== 'string' || !/^[\x21-\x7e]{1,4096}$/.test(client[key])) {
-      throw new Error('Private client.json must contain valid Service Token credentials.');
-    }
-  }
+  connectionHeaders(client);
   const serverURL = server.href.replace(/\/+$/, '');
   const expiresAt = Math.floor(now / 1000) + 300;
-  const payload = {version: 1, expires_at: expiresAt, server_url: serverURL,
-    client_id: client.client_id, client_secret: client.client_secret};
+  const quick = client.auth_mode === 'quick_tunnel';
+  const payload = quick
+    ? {version: 2, expires_at: expiresAt, server_url: serverURL, auth_mode: 'quick_tunnel', connection_key: client.connection_key}
+    : {version: 1, expires_at: expiresAt, server_url: serverURL, client_id: client.client_id, client_secret: client.client_secret};
   const link = 'dshremote://configure?data=' + Buffer.from(JSON.stringify(payload)).toString('base64url');
   if (Buffer.byteLength(link) > 2000) throw new Error('Connection configuration is too long for a scannable QR code.');
-  return {link, server: serverURL, expiresAt};
+  return {link, server: serverURL, expiresAt, ...(quick ? {connectionKey: client.connection_key} : {})};
 }
 
 export function readPairingClient(directory) {

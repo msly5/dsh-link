@@ -2,6 +2,14 @@
 
 目标是让一个新用户从干净 clone 得到自己可用的 dsh link。先读根目录 AGENTS.md；仅通过公开源码无法获得任何人的凭证。
 
+## 先选择连接方式
+
+没有域名时，按根目录中英文 README 的 **Quick Tunnel** 步骤：安装 Node 22+、cloudflared、Xcode 命令行工具，运行 `npm ci --ignore-scripts --prefix bridge` 和 `npm run quick --prefix bridge`。无需 Cloudflare 账户、域名、Team/AUD、Service Token 或 Tunnel Token。不要执行下面的 Cloudflare 配置和 LaunchAgent 安装。二维码自动填入 iOS 的 Quick Tunnel 模式、临时 URL 和连接密钥；需要包含此功能的新客户端，TestFlight 1.0 (7) 尚不支持。
+
+启动命令独立使用 3080 端口，不替换现有 Access 服务。密钥仅在进程内存和本地二维码窗口中，严禁记录到文件、命令参数、日志或 AI 回复。终端报告无密钥/错误密钥拒绝和认证 HTTP/WS 成功后，再验证手机扫码、测试、保存及聊天。输入 `p` 回车可重开二维码，`r` 回车可重新检查公网连接；Ctrl+C 停止，重启后重新扫码。若端口占用，选择新的 `DSH_QUICK_PORT`，不结束已有进程。启动失败不等于已连通，不把旧 TestFlight 构建当成支持新模式。
+
+需要固定地址、按设备发放 Service Token 时，使用下方 Access 部署流程。
+
 ## 需要从本地确认或向用户获取的信息
 
 | 信息 | 取得方式 | 是否可放 Git |

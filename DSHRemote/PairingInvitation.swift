@@ -9,8 +9,10 @@ struct PairingInvitation: Equatable {
         let version: Int
         let expires_at: Double
         let server_url: String
-        let client_id: String
-        let client_secret: String
+        let client_id: String?
+        let client_secret: String?
+        let auth_mode: String?
+        let connection_key: String?
     }
 
     init(scannedValue: String, now: Date = .now) throws {
@@ -26,7 +28,7 @@ struct PairingInvitation: Equatable {
         var base64 = encoded.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
         guard let data = Data(base64Encoded: base64),
-              let payload = try? JSONDecoder().decode(Payload.self, from: data), payload.version == 1,
+              let payload = try? JSONDecoder().decode(Payload.self, from: data), [1, 2].contains(payload.version),
               payload.expires_at.isFinite else {
             throw RemoteError(message: "配置二维码格式不受支持，请在 Mac 上重新生成。")
         }
@@ -34,7 +36,17 @@ struct PairingInvitation: Equatable {
         guard expiry > now, expiry.timeIntervalSince(now) <= 360 else {
             throw RemoteError(message: "二维码已过期或设备时间不一致，请在 Mac 上重新生成。")
         }
-        profile = try ConnectionProfile(server: payload.server_url, clientID: payload.client_id, clientSecret: payload.client_secret)
+        if payload.version == 2 {
+            guard payload.auth_mode == "quick_tunnel", payload.client_id == nil, payload.client_secret == nil else {
+                throw RemoteError(message: "配置二维码的连接方式不受支持，请在 Mac 上重新生成。")
+            }
+            profile = try ConnectionProfile(server: payload.server_url, authMode: .quickTunnel, connectionKey: payload.connection_key ?? "")
+        } else {
+            guard payload.auth_mode == nil, payload.connection_key == nil else {
+                throw RemoteError(message: "配置二维码的连接方式不受支持，请在 Mac 上重新生成。")
+            }
+            profile = try ConnectionProfile(server: payload.server_url, clientID: payload.client_id ?? "", clientSecret: payload.client_secret ?? "")
+        }
         expiresAt = expiry
     }
 }
