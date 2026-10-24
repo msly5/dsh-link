@@ -1,6 +1,6 @@
 # Cloudflare 配置：从零到 iPhone 可连接
 
-**没有域名？** 使用 [README 中的 Quick Tunnel 方式](../README.md#a-无域名quick-tunnel)：无需 Cloudflare 账户和域名，一条命令启动、扫码导入临时地址和独立连接密钥。下文是有域名的 Tunnel + Access 方案；Quick Tunnel 不需要执行这些账户、令牌或 DNS 步骤。
+**没有域名？** 使用 [README 中的 Quick Tunnel 方式](../README.md#b-无域名方式quick-tunnel)：无需 Cloudflare 账户和域名，一条命令启动、扫码导入临时地址和独立连接密钥。下文是有域名的 Tunnel + Access 方案；Quick Tunnel 不需要执行这些账户、令牌或 DNS 步骤。
 
 本文使用独立公网子域名、**远程管理的 Cloudflare Tunnel** 和 **Access Service Auth**。示例域名统一为 `dsh.example.com`，实际配置时全部替换成你自己的域名。不要复用陌生人的服务器或凭证。
 

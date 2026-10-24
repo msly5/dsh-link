@@ -25,14 +25,23 @@ iPhone / iPad 先安装 TestFlight，再打开链接加入测试。Mac 桥接与
 
 ## 连接方式
 
-| 方式 | 需要自己的域名吗 | 适合什么情况 |
+**推荐长期使用「自己的域名 + Cloudflare Tunnel + Access」。** 手机保存固定地址和有效的 Service Token 后，Mac 桥接或隧道正常重启无需重新扫码；可设置登录后自动运行，也能给每台设备单独发放、续期和撤销令牌。没有域名、想先体验时，可以使用 Quick Tunnel。
+
+| 对比项 | 域名 + Tunnel + Access（推荐） | Quick Tunnel（临时体验） |
 | --- | --- | --- |
-| **Quick Tunnel** | **不需要，也不需要 Cloudflare 账户** | 先体验、临时远程使用；一条命令启动并扫码 |
-| **Tunnel + Access** | 需要接入 Cloudflare 的域名与账户 | 长期使用、固定地址、按设备管理 Service Token |
+| 准备条件 | 自己的 Cloudflare 账户、接入的域名、Zero Trust / Access | 不需要 Cloudflare 账户或域名 |
+| 手机填写 | 固定 HTTPS 地址、Service Token 的 Client ID / Client Secret；支持扫码 | 临时 HTTPS 地址、64 位连接密钥；支持扫码 |
+| 重启与后台运行 | 保留域名和有效凭证即可继续连接；支持登录后自动运行 | 终端需保持运行，每次重新启动都要重新扫码 |
+| 多台 iPhone / iPad | 可以连接同一 Mac，推荐每台设备使用独立 Service Token | 可以连接同一 Mac，本次运行的设备共用连接密钥 |
+| 撤销某台设备 | 撤销其独立 Service Token；必要时重启桥接断开旧连接 | 需停止并重启，所有设备重新扫码 |
+| 推送通知 | 可选 APNs，需单独配置 | 当前未启用 APNs |
+| 适用场景 | 日常使用、长期远程连接 | 无域名试用、临时测试 |
+
+域名方式提供固定入口和更方便的设备管理；Mac 仍需保持开机、联网且 DSH 正在运行，不能保证 Mac 睡眠或离线时可连接。Quick Tunnel 的临时地址没有可用性保证，长期使用建议切换到域名方式。
 
 **Quick Tunnel 已在本仓库源码中实现。当前 TestFlight 构建 1.0 (7) 尚未包含该功能；请先从源码构建包含“Quick Tunnel”选项的客户端。** 两种方式都使用 HTTPS/WSS，Mac 桥接都验证凭证；Quick Tunnel 的独立连接密钥不依赖 Access。
 
-下图为 Tunnel + Access 模式；免域名方式直接见下方“无域名：Quick Tunnel”。
+下图为推荐的 Tunnel + Access 模式。按下方快速开始中的 **A. 域名方式（推荐）** 配置；没有域名时选择 **B. 无域名方式**。
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/connection-dark.svg">
@@ -60,13 +69,13 @@ Mac 必须保持开机、联网且 DSH 桌面端在运行。手机不需要安�
 
 ## 让 AI 帮你配置
 
-把这个仓库拉到 Mac，用能访问本机文件和终端的 AI 打开。**没有域名**时，给它这段指令：
-
-> 请阅读此仓库的 AGENTS.md、README.md 中的 Quick Tunnel 部分和 docs/ai-setup.md，帮我用免域名的 Quick Tunnel 配置 dsh link。检查 Mac 上的 DSH、Node、cloudflared 和 Xcode 命令行工具，安装 bridge 依赖，运行 npm run quick --prefix bridge，显示本地连接二维码。保留已有域名连接，不创建 Cloudflare 账户、域名、Access 或 Tunnel Token，不输出或保存连接密钥。验证公网无密钥与错误密钥被拒绝、正确凭证的 HTTP 与 WebSocket 可用，再帮我构建支持 Quick Tunnel 的 iOS 客户端。告诉我手机如何扫码和停止临时连接。
-
-**有域名、需要固定地址**时，使用以下指令：
+把这个仓库拉到 Mac，用能访问本机文件和终端的 AI 打开。**推荐域名方式，准备好自己的域名后使用以下指令：**
 
 > 请阅读此仓库的 AGENTS.md、docs/ai-setup.md 和 docs/cloudflare.md，帮我配置 dsh link。先检查 Mac 上的 DSH、Node、Xcode 和 cloudflared。我的目标域名是 `<你的域名>`。新建独立的 Tunnel、Access 应用和 Service Auth 策略，使用我明确指定的 Cloudflare 账户和域名。敏感凭证从仓库外的私有文件或安全输入读取，不回显、不写进源码、不提交 Git。完成桥接、隧道和 iOS 构建配置后，分别验证无凭证被拒绝、带凭证的 RPC 与 WebSocket 正常，最后告诉我手机需要填写的字段和私有文件位置。
+
+**没有域名、仅先体验 Quick Tunnel 时，使用以下指令：**
+
+> 请阅读此仓库的 AGENTS.md、README.md 中的 Quick Tunnel 部分和 docs/ai-setup.md，帮我用免域名的 Quick Tunnel 配置 dsh link。检查 Mac 上的 DSH、Node、cloudflared 和 Xcode 命令行工具，安装 bridge 依赖，运行 npm run quick --prefix bridge，显示本地连接二维码。保留已有域名连接，不创建 Cloudflare 账户、域名、Access 或 Tunnel Token，不输出或保存连接密钥。验证公网无密钥与错误密钥被拒绝、正确凭证的 HTTP 与 WebSocket 可用，再帮我构建支持 Quick Tunnel 的 iOS 客户端。告诉我手机如何扫码和停止临时连接。
 
 AI 能自动完成本地安装、文件生成、诊断及已授权的 Cloudflare 操作。Cloudflare/Apple 登录、账户选择、付款、手机信任开发者等交互可能仍需你本人完成。**不能仅凭构建成功就宣称已连通。**
 
@@ -84,28 +93,9 @@ Access 模式下使用的 `bootstrap.py` 只检查工具并在 `~/.config/dsh-re
 
 项目现名为 **dsh link**。为兼容已安装的客户端和 Mac 服务，Xcode 工程 `DSHRemote`、既有 Bundle ID、`dshremote://` 扫码链接、`DSH_REMOTE_CONFIG_DIR` 和私有配置目录继续沿用原标识；改名不要求重新填写连接凭证。
 
-### A. 无域名：Quick Tunnel
+### A. 域名方式（推荐）：Tunnel + Access
 
-1. 打开并登录 Mac 上的 DSH，保持 Mac 联网。在仓库根目录运行（缺少工具且已安装 Homebrew 时，先执行 `brew install node cloudflared`）：
-
-```bash
-npm run quick --prefix bridge
-```
-
-2. 命令会启动独立的本机桥接（默认 `127.0.0.1:3080`）和 cloudflared，获取随机的 `https://….trycloudflare.com` 地址，自动显示 Mac 本地二维码。它会检查公网无密钥/错误密钥被拒绝，以及认证 HTTP RPC 和 WebSocket 连通情况；终端只报告结果，不打印会话或密钥。
-3. 使用包含本功能的 iOS 源码构建（构建方式见下方 B 的第 4 步）。手机打开 **连接设置 → 扫描 Mac 连接二维码**，扫码会自动选择 **Quick Tunnel**，填入服务器和连接密钥；点“测试连接”，再“保存”。无需填写 Client ID / Client Secret。
-4. 无法扫码时，在 Mac 二维码窗口点 **查看手动连接信息**；手机选择 **Quick Tunnel**，填写该 HTTPS 地址与 64 位连接密钥。二维码 5 分钟后关闭，在运行命令的终端输入 `p` 并回车可以重新显示；输入 `r` 并回车可重新检查公网连接。
-5. 保持终端运行；按 **Ctrl+C** 停止本次桥接与隧道。每次启动都会生成新地址和新密钥，手机需重新扫码。密钥只存在 Mac 进程内存、二维码窗口和手机 Keychain，不写入配置文件或日志。
-
-Quick Tunnel 模式暂不启用 APNs 推送。Quick Tunnel 不使用 `tunnel.token`、`client.json`、Team Domain 或 AUD，也不需要运行 `scripts/run-tunnel.sh` 或安装 LaunchAgent。它与原有 Access 模式分开运行；若 3080 已被占用，改用 `DSH_QUICK_PORT=3081 npm run quick --prefix bridge`，命令不会关闭其他服务。
-
-底层使用 `cloudflared tunnel --config /dev/null --url http://127.0.0.1:3080`，忽略已有 cloudflared 配置而不修改它，本项目在桥接层增加随机 256 位密钥鉴权，同时保护 HTTP 和 WebSocket。不要把 Tunnel 直接指向 DSH 的随机端口。密钥泄露时，停止并重新运行 Quick Tunnel，让旧地址、旧密钥和已有连接失效。
-
-Quick Tunnel 面向临时测试，没有可用性保证；重建隧道后地址会变化，且不支持 SSE。本客户端使用 WebSocket 接收事件。不要添加 `--allowed-mail`：其交互式浏览器登录不适用于本客户端。若首次检查失败，确认网络和 DNS 能访问 `trycloudflare.com`，稍后输入 `r` 重试；失败提示不代表已连通。长期固定地址请使用下面的 Access 模式。参考 [Cloudflare Quick Tunnels 官方说明](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/)。
-
-### B. 有域名：Tunnel + Access
-
-先准备私有配置模板：
+推荐用于日常与长期远程连接。先准备私有配置模板：
 
 ```bash
 python3 scripts/bootstrap.py
@@ -145,6 +135,27 @@ iPhone 打开 **连接设置 → 扫描 Mac 连接二维码**，或用系统相�
 二维码由 macOS 原生 Core Image 在本机内存生成，不启动网页、不请求外部二维码服务、不打印凭证。它包含完整 Service Token，等同凭证，**不要截图、分享或提交到仓库**。过期只限制 App 导入，不会撤销 Token；如泄露，需在 Cloudflare 撤销。可运行 `npm run pair --prefix bridge -- --check` 验证二维码本地生成与识别，不显示二维码。
 
 不要把 Cloudflare API Token、Tunnel Token 或 DSH 登录密钥填到手机上。手机只需要 **Service Token** 的两项凭证。
+
+### B. 无域名方式：Quick Tunnel
+
+1. 打开并登录 Mac 上的 DSH，保持 Mac 联网。在仓库根目录运行（缺少工具且已安装 Homebrew 时，先执行 `brew install node cloudflared`）：
+
+```bash
+npm run quick --prefix bridge
+```
+
+2. 命令会启动独立的本机桥接（默认 `127.0.0.1:3080`）和 cloudflared，获取随机的 `https://….trycloudflare.com` 地址，自动显示 Mac 本地二维码。它会检查公网无密钥/错误密钥被拒绝，以及认证 HTTP RPC 和 WebSocket 连通情况；终端只报告结果，不打印会话或密钥。
+3. 使用包含本功能的 iOS 源码构建（构建方式见上方 A 的第 4 步）。手机打开 **连接设置 → 扫描 Mac 连接二维码**，扫码会自动选择 **Quick Tunnel**，填入服务器和连接密钥；点“测试连接”，再“保存”。无需填写 Client ID / Client Secret。
+4. 无法扫码时，在 Mac 二维码窗口点 **查看手动连接信息**；手机选择 **Quick Tunnel**，填写该 HTTPS 地址与 64 位连接密钥。二维码 5 分钟后关闭，在运行命令的终端输入 `p` 并回车可以重新显示；输入 `r` 并回车可重新检查公网连接。
+5. 保持终端运行；按 **Ctrl+C** 停止本次桥接与隧道。每次启动都会生成新地址和新密钥，手机需重新扫码。密钥只存在 Mac 进程内存、二维码窗口和手机 Keychain，不写入配置文件或日志。
+
+二维码的 5 分钟有效期只限制导入，不会在 5 分钟后自动断开已连接的手机；关闭二维码窗口也不会停止隧道。要结束连接，应在运行命令的终端按 Ctrl+C。App 当前一次保存一份连接配置；切换连接方式或服务器时需保存对应的新配置。
+
+Quick Tunnel 模式暂不启用 APNs 推送。Quick Tunnel 不使用 `tunnel.token`、`client.json`、Team Domain 或 AUD，也不需要运行 `scripts/run-tunnel.sh` 或安装 LaunchAgent。它与原有 Access 模式分开运行；若 3080 已被占用，改用 `DSH_QUICK_PORT=3081 npm run quick --prefix bridge`，命令不会关闭其他服务。
+
+底层使用 `cloudflared tunnel --config /dev/null --url http://127.0.0.1:3080`，忽略已有 cloudflared 配置而不修改它，本项目在桥接层增加随机 256 位密钥鉴权，同时保护 HTTP 和 WebSocket。不要把 Tunnel 直接指向 DSH 的随机端口。密钥泄露时，停止并重新运行 Quick Tunnel，让旧地址、旧密钥和已有连接失效。
+
+Quick Tunnel 面向临时测试，没有可用性保证；重建隧道后地址会变化，且不支持 SSE。本客户端使用 WebSocket 接收事件。不要添加 `--allowed-mail`：其交互式浏览器登录不适用于本客户端。若首次检查失败，确认网络和 DNS 能访问 `trycloudflare.com`，稍后输入 `r` 重试；失败提示不代表已连通。长期固定地址请使用上方推荐的 Access 模式。参考 [Cloudflare Quick Tunnels 官方说明](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/)。
 
 ## 常驻运行与连通检查
 
