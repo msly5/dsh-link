@@ -77,34 +77,7 @@ struct SessionListView: View {
             }
         }
         .sheet(isPresented: $showSettings, onDismiss: { pairingURL = nil }) { SettingsView(pairingURL: pairingURL) }
-        .task(id: scenePhase) {
-            guard scenePhase == .active else { return }
-            await refresh()
-            if !initialLoadFinished {
-                initialLoadFinished = true
-                #if DEBUG
-                let args = ProcessInfo.processInfo.arguments
-                if DesignPreview.enabled {
-                    if args.contains("--preview-chat"), let first = sessions.first { path = [first] }
-                    if args.contains("--preview-conversations") { screen = .conversations }
-                    if args.contains("--preview-workspaces") { screen = .workspaces }
-                    if args.contains("--preview-archived") { screen = .archived }
-                    if args.contains("--preview-new") { showNewSession = true }
-                    if args.contains("--preview-settings") { showSettings = true }
-                    if args.contains("--preview-sidebar") { sidebarOpen = true }
-                    return
-                }
-                if let index = args.firstIndex(of: "--open-session"), index + 1 < args.count { openSession(id: args[index + 1]) }
-                #endif
-                if !AppConfig.isConfigured { showSettings = true }
-                if path.isEmpty, let last = UserDefaults.standard.string(forKey: lastSessionKey),
-                   let session = activeSessions.first(where: { $0.id == last }) { path = [session] }
-            }
-            while !Task.isCancelled {
-                do { try await Task.sleep(for: .seconds(15)) } catch { return }
-                if path.isEmpty || sidebarOpen { await refresh() }
-            }
-        }
+        .task(id: scenePhase) { await refreshWhileActive() }
         .onChange(of: path.last?.sessionId) { _, id in
             guard !previewing else { return }
             if let id { UserDefaults.standard.set(id, forKey: lastSessionKey) }
@@ -112,16 +85,11 @@ struct SessionListView: View {
         }
         .onChange(of: sidebarOpen) { _, open in
             guard open else { return }
-            Task { await load() }
-            Task { await loadWorkspaces() }
+            refreshSidebar()
         }
         .onOpenURL { handleDeepLink($0) }
         .onReceive(NotificationCenter.default.publisher(for: .dshServerChanged)) { _ in
-            path = []; pendingSessionId = nil; sessions = []; workspaces = nil; selectedWorkspace = nil
-            archivedSessionIDs = []; workspaceError = nil; archiveRequestID = UUID(); updatingSessionID = nil
-            pendingArchive = nil; archiveError = nil; workspaceLoadID = UUID()
-            Task { await load() }
-            Task { await loadWorkspaces() }
+            resetForChangedServer()
         }
         .onReceive(NotificationCenter.default.publisher(for: .dshOpenSession)) { note in
             if let id = note.object as? String { openSession(id: id); dismissSidebarIfNeeded() }
@@ -183,6 +151,49 @@ struct SessionListView: View {
         dismissSidebarIfNeeded()
         if AppConfig.isConfigured || previewing { showNewSession = true }
         else { showSettings = true }
+    }
+
+    // Keep asynchronous state changes outside the view builder so older
+    // Swift compilers can type-check the navigation and presentation chain.
+    private func refreshWhileActive() async {
+        guard scenePhase == .active else { return }
+        await refresh()
+        if !initialLoadFinished {
+            initialLoadFinished = true
+            #if DEBUG
+            let args = ProcessInfo.processInfo.arguments
+            if DesignPreview.enabled {
+                if args.contains("--preview-chat"), let first = sessions.first { path = [first] }
+                if args.contains("--preview-conversations") { screen = .conversations }
+                if args.contains("--preview-workspaces") { screen = .workspaces }
+                if args.contains("--preview-archived") { screen = .archived }
+                if args.contains("--preview-new") { showNewSession = true }
+                if args.contains("--preview-settings") { showSettings = true }
+                if args.contains("--preview-sidebar") { sidebarOpen = true }
+                return
+            }
+            if let index = args.firstIndex(of: "--open-session"), index + 1 < args.count { openSession(id: args[index + 1]) }
+            #endif
+            if !AppConfig.isConfigured { showSettings = true }
+            if path.isEmpty, let last = UserDefaults.standard.string(forKey: lastSessionKey),
+               let session = activeSessions.first(where: { $0.id == last }) { path = [session] }
+        }
+        while !Task.isCancelled {
+            do { try await Task.sleep(for: .seconds(15)) } catch { return }
+            if path.isEmpty || sidebarOpen { await refresh() }
+        }
+    }
+
+    private func refreshSidebar() {
+        Task { await load() }
+        Task { await loadWorkspaces() }
+    }
+
+    private func resetForChangedServer() {
+        path = []; pendingSessionId = nil; sessions = []; workspaces = nil; selectedWorkspace = nil
+        archivedSessionIDs = []; workspaceError = nil; archiveRequestID = UUID(); updatingSessionID = nil
+        pendingArchive = nil; archiveError = nil; workspaceLoadID = UUID()
+        refreshSidebar()
     }
 
     // MARK: - 数据
