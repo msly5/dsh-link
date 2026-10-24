@@ -21,17 +21,12 @@ iPhone / iPad 先安装 TestFlight，再打开链接加入测试。Mac 桥接与
 
 <img src="docs/screens/dsh-link/iphone-home.jpg" width="220" alt="dsh link 实机首页与黑色鲸鱼"> <img src="docs/screens/dsh-link/iphone-sidebar.jpg" width="220" alt="dsh link 实机工作区与会话侧栏"> <img src="docs/screens/dsh-link/iphone-chat.jpg" width="220" alt="dsh link 实机聊天页与完整表格">
 
-截图来自 iPhone 13 Pro 实机，使用 Debug 预览中的虚构数据，不包含真实会话或凭证。界面验证范围见 [UI 验证记录](docs/minimal-ui-verification.md) 和 [iPad 布局记录](docs/ipad-layout.md)。
-
 ## 连接方式
 
-```mermaid
-flowchart LR
-  A[iPhone · dsh link] -->|HTTPS / WSS + Service Token| B[Cloudflare Access]
-  B --> C[Cloudflare Tunnel]
-  C -->|HTTP / WS · loopback| D[Mac bridge · 127.0.0.1:3079]
-  D -->|校验 Access JWT 后注入本地认证 Cookie| E[DSH desktop host]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/connection-dark.svg">
+  <img src="docs/images/connection-light.svg" width="900" alt="iPhone 或 iPad → Cloudflare Access 与 Tunnel → Mac 桥接服务与 DSH">
+</picture>
 
 Access 在 Cloudflare 边缘验证手机的 Service Token。Mac 桥接再次验证 JWT 签名、签发者、应用 AUD 和有效期，再读取**当前 Mac 用户**的 DSH 浏览器会话凭证访问桌面端。DSH 的随机端口会自动发现。
 
