@@ -107,7 +107,7 @@ AI 能自动完成本地安装、文件生成、诊断及已授权的 Cloudflare
 
 ## 快速开始
 
-有仓库访问权限时（或后续公开后），克隆项目。后续命令均在仓库根目录执行：
+克隆项目，后续命令均在仓库根目录执行：
 
 ```bash
 git clone https://github.com/msly5/dsh-link.git

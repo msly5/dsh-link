@@ -109,7 +109,7 @@ The detailed deployment guides linked below are currently in Chinese; the AI can
 
 ## Quick start
 
-Clone the project if you have access to the repository, or after it becomes public. Run subsequent commands from the repository root:
+Clone the project, then run subsequent commands from the repository root:
 
 ```bash
 git clone https://github.com/msly5/dsh-link.git
