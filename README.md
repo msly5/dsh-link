@@ -39,7 +39,7 @@ iPhone / iPad 先安装 TestFlight，再打开链接加入测试。Mac 桥接与
 
 域名方式提供固定入口和更方便的设备管理；Mac 仍需保持开机、联网且 DSH 正在运行，不能保证 Mac 睡眠或离线时可连接。Quick Tunnel 的临时地址没有可用性保证，长期使用建议切换到域名方式。
 
-**Quick Tunnel 已在本仓库源码中实现。当前 TestFlight 构建 1.0 (7) 尚未包含该功能；请先从源码构建包含“Quick Tunnel”选项的客户端。** 两种方式都使用 HTTPS/WSS，Mac 桥接都验证凭证；Quick Tunnel 的独立连接密钥不依赖 Access。
+**Quick Tunnel 从 1.0 (8) 构建开始提供，已开放外部测试。通过上方 TestFlight 链接安装或更新；如果设置页没有“Quick Tunnel”，请确认已更新到 1.0 (8) 或更新构建。也可从源码构建。** 两种方式都使用 HTTPS/WSS，Mac 桥接都验证凭证；Quick Tunnel 的独立连接密钥不依赖 Access。
 
 下图为推荐的 Tunnel + Access 模式。按下方快速开始中的 **A. 域名方式（推荐）** 配置；没有域名时选择 **B. 无域名方式**。
 
@@ -145,7 +145,7 @@ npm run quick --prefix bridge
 ```
 
 2. 命令会启动独立的本机桥接（默认 `127.0.0.1:3080`）和 cloudflared，获取随机的 `https://….trycloudflare.com` 地址，自动显示 Mac 本地二维码。它会检查公网无密钥/错误密钥被拒绝，以及认证 HTTP RPC 和 WebSocket 连通情况；终端只报告结果，不打印会话或密钥。
-3. 使用包含本功能的 iOS 源码构建（构建方式见上方 A 的第 4 步）。手机打开 **连接设置 → 扫描 Mac 连接二维码**，扫码会自动选择 **Quick Tunnel**，填入服务器和连接密钥；点“测试连接”，再“保存”。无需填写 Client ID / Client Secret。
+3. 先通过上方 TestFlight 链接安装 1.0 (8) 或更新构建，也可按上方 A 的第 4 步从源码构建。手机打开 **连接设置 → 扫描 Mac 连接二维码**，扫码会自动选择 **Quick Tunnel**，填入服务器和连接密钥；点“测试连接”，再“保存”。无需填写 Client ID / Client Secret。
 4. 无法扫码时，在 Mac 二维码窗口点 **查看手动连接信息**；手机选择 **Quick Tunnel**，填写该 HTTPS 地址与 64 位连接密钥。二维码 5 分钟后关闭，在运行命令的终端输入 `p` 并回车可以重新显示；输入 `r` 并回车可重新检查公网连接。
 5. 保持终端运行；按 **Ctrl+C** 停止本次桥接与隧道。每次启动都会生成新地址和新密钥，手机需重新扫码。密钥只存在 Mac 进程内存、二维码窗口和手机 Keychain，不写入配置文件或日志。
 

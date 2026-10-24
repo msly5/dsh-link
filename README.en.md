@@ -39,7 +39,7 @@ Install TestFlight on your iPhone or iPad, then open the link to join. You still
 
 The domain option provides a stable entry point and easier device management. Your Mac must still be awake, online, and running DSH; this does not guarantee access while it is asleep or offline. Quick Tunnel has no uptime guarantee, so use the domain option for ongoing access.
 
-**Quick Tunnel is implemented in this repository's source. The current TestFlight build, 1.0 (7), does not include it yet. Build the client from source with the “Quick Tunnel” option.** Both modes use HTTPS/WSS and authenticate requests at the Mac bridge. Quick Tunnel uses an independent connection key.
+**Quick Tunnel is available starting with build 1.0 (8), which is open for external testing. Install or update using the TestFlight link above. If the settings page has no “Quick Tunnel” option, check that you have build 1.0 (8) or later. Building from source is also supported.** Both modes use HTTPS/WSS and authenticate requests at the Mac bridge. Quick Tunnel uses an independent connection key.
 
 The diagram shows the recommended Tunnel + Access setup. Follow **A. Own domain (recommended)** below, or choose **B. No domain** to try Quick Tunnel.
 
@@ -145,7 +145,7 @@ npm run quick --prefix bridge
 ```
 
 2. The command starts a separate loopback bridge (default `127.0.0.1:3080`) and cloudflared, obtains a random `https://….trycloudflare.com` address, and opens a local QR window. It checks public rejection of missing/incorrect keys and authenticated HTTP RPC and WebSocket connectivity. Results contain no conversations or credentials.
-3. Build the iOS client with this feature from source; see step 4 under A above. On the phone, choose **Connection settings → Scan Mac connection QR code**. Scanning selects **Quick Tunnel** and fills in the server and connection key. Tap **Test connection**, then **Save**. No Client ID or Client Secret is needed.
+3. Install build 1.0 (8) or later using the TestFlight link above, or build from source using step 4 under A. On the phone, choose **Connection settings → Scan Mac connection QR code**. Scanning selects **Quick Tunnel** and fills in the server and connection key. Tap **Test connection**, then **Save**. No Client ID or Client Secret is needed.
 4. For manual entry, click **查看手动连接信息** in the Mac QR window. Select **Quick Tunnel** on the phone and enter the HTTPS address and 64-character connection key. The QR window closes after five minutes; type `p` and press Return in the running terminal to reopen it, or `r` to recheck public connectivity.
 5. Keep the terminal running. Press **Ctrl+C** to stop this bridge and tunnel. Every launch generates a new address and key, so scan again after restarting. The key stays in Mac process memory, the local QR window, and the phone's Keychain; it is never written to configuration files or logs.
 
