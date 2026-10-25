@@ -32,7 +32,7 @@ test('Windows discovers a real host process and renders a local QR image', {skip
     const qr=await openPairingWindow(pairingInvitation({server_url:'https://fixture.trycloudflare.com',auth_mode:'quick_tunnel',connection_key:'a'.repeat(64)}),{check:true});
     const [code]=await once(qr,'exit');assert.equal(code,0);
     execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',
-      "$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User; $acl=[Security.AccessControl.DirectorySecurity]::new(); $acl.SetOwner($sid); $acl.SetAccessRuleProtection($true,$false); $acl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow')); Set-Acl -LiteralPath $env:DSH_PRIVATE_PATH -AclObject $acl"],{env:{...process.env,DSH_PRIVATE_PATH:dir},stdio:'ignore'});
+      "$ErrorActionPreference='Stop'; $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User; $acl=[Security.AccessControl.DirectorySecurity]::new(); $acl.SetOwner($sid); $acl.SetAccessRuleProtection($true,$false); $acl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow')); Set-Acl -LiteralPath $env:DSH_PRIVATE_PATH -AclObject $acl"],{env:{...process.env,DSH_PRIVATE_PATH:dir},stdio:['ignore','ignore','inherit']});
     assert.doesNotThrow(()=>assertPrivate(dir));
   } finally {child.kill();await once(child,'exit');fs.rmSync(dir,{recursive:true,force:true});}
 });
