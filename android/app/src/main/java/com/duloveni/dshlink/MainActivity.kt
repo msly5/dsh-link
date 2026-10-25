@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
                         IconButton(onClick={model.error=null}) { Icon(Icons.Outlined.Close,"关闭提示") }
                     } } }
                     if(model.selected==null) {
-                        Column(Modifier.weight(1f).fillMaxWidth().padding(28.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
+                        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(28.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
                             Whale(Modifier.size(68.dp)); Spacer(Modifier.height(28.dp))
                             Text("从这里，继续。",fontSize=32.sp,fontFamily=FontFamily.Serif)
                             Text("连上你的电脑，接着上次的思路。",color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.padding(top=16.dp,bottom=30.dp))
