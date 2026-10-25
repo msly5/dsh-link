@@ -20,7 +20,7 @@ export function loadConfig({ authMode = 'access' } = {}) {
   }
   return {
     host: '127.0.0.1', port, team, aud, upstreamPort, authMode,
-    credentialsFile: process.env.DSH_CREDENTIALS_FILE || path.join(os.homedir(), '.dsh', '.credentials.yaml'),
+    credentialsFile: process.env.DSH_CREDENTIALS_FILE || path.join(process.env.DSH_HOME || path.join(os.homedir(), '.dsh'), '.credentials.yaml'),
     configDir: configDir(),
     pushEnabled: process.env.APNS_ENABLED === '1',
   };

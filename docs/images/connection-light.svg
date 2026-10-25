@@ -31,7 +31,7 @@
     <rect x="744" y="59" width="32" height="23" rx="3"/>
     <path d="M740 88h40m-24-6v6m8-6v6"/>
   </g>
-  <text class="title" x="140" y="128">iPhone / iPad</text>
+  <text class="title" x="140" y="128">iOS / Android</text>
   <text class="detail" x="140" y="158">dsh link</text>
   <text class="title" x="450" y="128">Cloudflare</text>
   <text class="detail" x="450" y="158">Access · Tunnel</text>

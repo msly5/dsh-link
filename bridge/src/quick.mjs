@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
+import { devNull } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
 import { loadConfig } from './config.mjs';
 import { targetResolver } from './dsh.mjs';
@@ -35,7 +36,7 @@ async function showPairing() {
     qrWindow = child;
     child.on('error', () => console.error('Could not open the QR window. Enter p to retry.'));
     child.on('exit', code => { if (code && !stopping) console.error('QR window closed with an error. Enter p to retry.'); });
-  } catch { console.error('Could not prepare the QR window. Check Xcode command-line tools, then enter p.'); }
+  } catch { console.error('Could not prepare the QR window. Check Swift on macOS or Windows PowerShell, then enter p.'); }
   finally { openingWindow = false; }
 }
 
@@ -60,7 +61,7 @@ async function verifyPublicConnection() {
 }
 
 try {
-  if (process.platform !== 'darwin') throw new Error('Quick Tunnel setup requires macOS.');
+  if (!['darwin','win32'].includes(process.platform)) throw new Error('Quick Tunnel setup supports macOS and Windows.');
   if (process.argv.length > 2) throw new Error('Run npm run quick --prefix bridge without credential arguments.');
   const config = loadConfig({authMode:'quick_tunnel'});
   const target = targetResolver(config);
@@ -73,7 +74,7 @@ try {
   });
   console.log(`Quick bridge listening on 127.0.0.1:${config.port}; connection key required.`);
   // Ignore existing named-tunnel configuration without editing it.
-  tunnel = spawn(process.env.CLOUDFLARED_BIN || 'cloudflared', ['tunnel', '--config', '/dev/null', '--no-autoupdate', '--url', `http://127.0.0.1:${config.port}`], {stdio:['ignore','pipe','pipe']});
+  tunnel = spawn(process.env.CLOUDFLARED_BIN || 'cloudflared', ['tunnel', '--config', devNull, '--no-autoupdate', '--url', `http://127.0.0.1:${config.port}`], {stdio:['ignore','pipe','pipe'], windowsHide:true});
   tunnel.on('error', () => { console.error('Cannot start cloudflared. Install it or set CLOUDFLARED_BIN.'); stop(1); });
   tunnel.on('exit', () => { if (!stopping) { console.error('cloudflared exited. Restart Quick Tunnel to get a new address and key.'); stop(1); } });
   let output = '';
@@ -86,7 +87,7 @@ try {
     client = {server_url:match[0], auth_mode:'quick_tunnel', connection_key:key};
     output = '';
     console.log(`Temporary server: ${client.server_url}`);
-    console.log('Scan the Mac QR code in dsh link. Enter p then Return to reopen it, r to recheck the connection; Ctrl+C stops the bridge and tunnel.');
+    console.log('Scan the computer QR code in dsh link (iOS or Android). Enter p then Return to reopen it, r to recheck the connection; Ctrl+C stops the bridge and tunnel.');
     void showPairing();
     void verifyPublicConnection();
   };

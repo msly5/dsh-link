@@ -1,27 +1,28 @@
 # dsh link: instructions for AI assistants
 
-Read `README.md`, `docs/ai-setup.md`, and `docs/cloudflare.md` before deployment. This repository contains an unofficial iOS client and a local macOS DSH bridge. It does not contain DSH itself or any working credentials.
+Read `README.md`, `docs/ai-setup.md`, and `docs/cloudflare.md` before deployment. On Windows also read `docs/windows.md`; for Android read `docs/android.md`. This repository contains unofficial iOS / Android clients and a local macOS / Windows DSH bridge. It does not contain DSH itself or any working credentials.
 
 ## Scope and credentials
 
 - Make only the changes the user requested; preserve existing DSH installations and unrelated Cloudflare resources.
 - Never commit secrets, user data, real conversation screenshots, signing profiles, private keys, device tokens, or logs. `.gitignore` alone is not a security audit.
-- Put runtime configuration in an absolute path outside this repository, default `~/.config/dsh-remote/`. Files containing secrets must be `0600`, private directories `0700`.
+- Put runtime configuration in an absolute path outside this repository, default `~/.config/dsh-remote/`. On macOS, files containing secrets must be `0600`, private directories `0700`; on Windows use a private current-user ACL.
 - Never print a secret or embed it in command arguments. Read credentials from private files, OS secure storage or hidden input. Do not ask the user to paste secrets into chat.
+- Android stores one URL-bound profile encrypted with Android Keystore, with backup disabled. Keep signing keys/passwords in OS secure storage, never in Gradle or Git. Release must reject debug fixture configuration and cleartext HTTP.
 - The iOS client stores a single URL-bound connection profile in Keychain. Do not restore compiled `Secrets.swift`, default personal servers, or UserDefaults-based credential storage.
 - Keep the bridge bound to `127.0.0.1`. Access mode requires signed Cloudflare JWTs for HTTP and WebSocket upgrades. Quick Tunnel mode requires the generated 256-bit connection key on both transports. Do not introduce header-presence or `NO_ACCESS` bypasses.
 - Cloudflare API Token, Tunnel Token, Service Token, DSH local credentials, and APNs signing key are different credentials. Use each only at its intended layer.
 
 ## Deployment workflow
 
-Choose the connection mode first. For a user without a domain, follow the Quick Tunnel section of README.md / README.en.md: install bridge dependencies, run `npm run quick --prefix bridge`, then scan the local QR window using a client with Quick Tunnel support. No Cloudflare account, Zone, Team/AUD, Service Token, Tunnel Token, or LaunchAgent is needed. The runner generates its key only in memory, verifies authenticated public HTTP/WS, and stops the bridge/tunnel on Ctrl+C. Do not write its key to files or print it. Preserve existing Access services. The numbered workflow below is for Access mode with a domain.
+Choose the connection mode first. For a user without a domain, follow the Quick Tunnel section of README.md / README.en.md: install bridge dependencies, run `npm run quick --prefix bridge`, then scan the local QR window using a client with Quick Tunnel support. No Cloudflare account, Zone, Team/AUD, Service Token, Tunnel Token, or startup service is needed. Windows uses npm.cmd and its native QR window; no Xcode or LaunchAgent. The runner generates its key only in memory, verifies authenticated public HTTP/WS, and stops the bridge/tunnel on Ctrl+C. Do not write its key to files or print it. Preserve existing Access services. The numbered workflow below is for Access mode with a domain.
 
 1. Inspect installed tools and running DSH. Run `python3 scripts/bootstrap.py`, then `npm ci --ignore-scripts --prefix bridge`.
 2. Determine the user's intended Cloudflare account, Zone, unused hostname, and Team Domain. Read existing resources before any mutation. Do not choose an account based only on a familiar name.
 3. Follow `docs/cloudflare.md`: Service Token, entire-hostname Access application with Service Auth, Tunnel loopback route and DNS. Cloud modifications require user authorization; a request to configure this project authorizes its own necessary resources, not unrelated replacements.
 4. Store Cloudflare results privately; never copy DSH's `.credentials.yaml` into this repo. Write only Team Domain/AUD and optional settings into private `bridge.env`.
 5. Run `npm run doctor --prefix bridge`, then test bridge and tunnel in foreground. Install LaunchAgents only if the user wants persistent operation. Never restart unknown existing services to free a port.
-6. Configure `config/Local.xcconfig` using the user's Apple Team and unique Bundle ID. APNs is optional and disabled by default. Build, then guide user-controlled Apple/phone trust steps if necessary.
+6. Prebuilt iOS TestFlight / Android APK need no source build. For iOS source builds only, configure `config/Local.xcconfig` using the user's Apple Team and unique Bundle ID. APNs is optional and disabled by default. Build, then guide user-controlled Apple/phone trust steps if necessary.
 7. Verify unauthorized denial, authenticated RPC, authenticated WebSocket, and iPhone connection. Do not claim cloud or device delivery from local tests alone.
 
 ## Checks

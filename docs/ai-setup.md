@@ -2,9 +2,18 @@
 
 目标是让一个新用户从干净 clone 得到自己可用的 dsh link。先读根目录 AGENTS.md；仅通过公开源码无法获得任何人的凭证。
 
+## 先识别电脑与手机平台
+
+先确认电脑是 macOS 还是 Windows、手机是 iOS 还是 Android。两种手机都可以连接两种电脑。
+
+- Windows 执行 [Windows 指南](windows.md)，用 `npm.cmd`、PowerShell 和当前用户 ACL；不运行 Homebrew、Xcode、macOS shell / LaunchAgent 安装脚本。
+- Android 安装 [Release APK](https://github.com/msly5/dsh-link/releases/latest) 或按 [Android 构建说明](android.md) 使用 JDK 17 / SDK 35；无需 Apple Team。Android 凭证经 Keystore 加密，默认无系统推送。
+- iOS 推荐 TestFlight。IPA 是 Apple 分发导出包，不是任意 iPhone 都能直接安装的包；自行构建才需要 Xcode 和自己的签名。
+- Windows 桥接自动化测试不等同于真实 Windows DSH 已连通；最终仍需验证用户电脑上的 HTTP / WS 和手机连接。
+
 ## 先选择连接方式
 
-没有域名时，按根目录中英文 README 的 **Quick Tunnel** 步骤：安装 Node 22+、cloudflared、Xcode 命令行工具，运行 `npm ci --ignore-scripts --prefix bridge` 和 `npm run quick --prefix bridge`。无需 Cloudflare 账户、域名、Team/AUD、Service Token 或 Tunnel Token。不要执行下面的 Cloudflare 配置和 LaunchAgent 安装。二维码自动填入 iOS 的 Quick Tunnel 模式、临时 URL 和连接密钥；请使用 TestFlight 1.0 (8) 或更新构建，或从源码构建；1.0 (7) 及更早版本不支持。
+没有域名时，按根目录中英文 README 的 **Quick Tunnel** 步骤：安装 Node 22+、cloudflared（仅 Mac 原生二维码还需要 Xcode 命令行工具），运行 `npm ci --ignore-scripts --prefix bridge` 和 `npm run quick --prefix bridge`。无需 Cloudflare 账户、域名、Team/AUD、Service Token 或 Tunnel Token。不要执行下面的 Cloudflare 配置和 LaunchAgent 安装。二维码自动填入 iOS / Android 的 Quick Tunnel 模式、临时 URL 和连接密钥；请使用 TestFlight 1.0 (8) 或更新构建，或从源码构建；1.0 (7) 及更早版本不支持。
 
 启动命令独立使用 3080 端口，不替换现有 Access 服务。密钥仅在进程内存和本地二维码窗口中，严禁记录到文件、命令参数、日志或 AI 回复。终端报告无密钥/错误密钥拒绝和认证 HTTP/WS 成功后，再验证手机扫码、测试、保存及聊天。输入 `p` 回车可重开二维码，`r` 回车可重新检查公网连接；Ctrl+C 停止，重启后重新扫码。若端口占用，选择新的 `DSH_QUICK_PORT`，不结束已有进程。启动失败不等于已连通，不把旧 TestFlight 构建当成支持新模式。
 
@@ -28,7 +37,7 @@
 
 ## 阶段 A：只读环境检查与本地准备
 
-1. 确认 macOS、DSH 正在运行并已登录；不要替用户退出登录、修改桌面端或关闭其他实例。
+1. 确认电脑操作系统、DSH 正在运行并已登录；不要替用户退出登录、修改桌面端或关闭其他实例。
 2. 检查 Node 22+、npm、Python 3、cloudflared `2025.4.0`+ 与 Xcode。
 3. `python3 scripts/bootstrap.py` 创建仓库外的配置模板；已存在的文件会保留。
 4. `npm ci --ignore-scripts --prefix bridge` 安装锁定依赖。不要把 `node_modules` 加入 Git。
@@ -42,16 +51,16 @@
 
 如果无法执行某项需要本人登录的步骤，列出具体页面和所需字段，让用户完成该交互，再继续其余工作。不要为绕过登录而降低 Access 策略。
 
-## 阶段 C：Mac 桥接和隧道
+## 阶段 C：电脑桥接和隧道
 
 - 私有 `bridge.env` 配置正确的 Team Domain 和 AUD；仅需这个验签配置，不需要把手机 Secret 给 bridge。
 - `npm run doctor --prefix bridge` 验证本机 DSH。该步骤不证明公网可用。
-- 前台启动 `npm start --prefix bridge` 与 `sh scripts/run-tunnel.sh`，确认 Tunnel Healthy。
+- 前台启动 `npm start --prefix bridge` 与 `npm run tunnel --prefix bridge`，确认 Tunnel Healthy。
 - 可选 `python3 scripts/store-secret.py client` 保存探测配置，然后 `node bridge/src/probe.mjs`。AI 若用私有 API 结果创建此 JSON，字段必须是 `server_url`、`client_id`、`client_secret`，模式 `0600`；不要把 JSON 输出到对话。
 - 不持久运行时交代前台进程会随终端退出；需要常驻时用 `python3 scripts/service.py install`，不要手写带 token 的 LaunchAgent。
 - `service.py uninstall` 仅移除此项目的两个用户启动项，保留 DSH 和私有配置。
 
-## 阶段 D：iPhone
+## 阶段 D：手机（以下签名步骤仅 iOS 源码构建）
 
 - 复制 `config/Local.example.xcconfig` 为被 Git 忽略的 `Local.xcconfig`，填用户自己的 Team / Bundle ID。
 - 默认不开启推送。需要时另读 `push.md`。

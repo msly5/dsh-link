@@ -35,3 +35,11 @@ xcuserdata/
 __pycache__/
 
 **/client.json
+# Android SDK, caches and signing material
+.gradle/
+.kotlin/
+local.properties
+*.apk
+*.aab
+*.jks
+*.keystore

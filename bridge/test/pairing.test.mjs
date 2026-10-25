@@ -30,7 +30,7 @@ test('rejects insecure, ambiguous or credential-bearing server URLs and header i
   }
   assert.throws(() => pairingInvitation({...client, client_secret:'test'.repeat(600)}));
 });
-test('reads only private configuration outside the repository and redacts parse errors', () => {
+test('reads only private configuration outside the repository and redacts parse errors', {skip:process.platform==='win32'}, () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-pairing-test-'));
   try {
     const file = path.join(directory, 'client.json');

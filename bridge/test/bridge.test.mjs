@@ -50,6 +50,9 @@ test('authenticated HTTP and WS forward DSH cookie, strip Access secrets and rej
   assert.equal(reply.status,200); assert.equal(reply.headers.get('set-cookie'),null);
   assert.deepEqual((await reply.json()).result.value.items,[]);
   assert.equal(received.cookie,'dsh-auth-test=private');
+  assert.equal((await fetch(base+'/api/$events/result',{method:'POST',headers:auth,body:'{}'})).status,200);
+  assert.equal((await fetch(base+'/api/$events/result',{method:'POST',body:'{}'})).status,403);
+  assert.equal((await fetch(base+'/api/$events/other',{method:'POST',headers:auth,body:'{}'})).status,404);
   for(const header of ['cf-access-jwt-assertion','cf-access-client-id','cf-access-client-secret']) assert.equal(received[header],undefined);
   assert.equal((await fetch(base+'/',{headers:auth})).status,404);
   assert.equal((await fetch(base+'/push/register',{method:'POST',headers:auth,body:'{}'})).status,503);

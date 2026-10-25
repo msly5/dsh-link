@@ -1,10 +1,12 @@
-# Cloudflare 配置：从零到 iPhone 可连接
+# Cloudflare 配置：从零到手机可连接
 
 **没有域名？** 使用 [README 中的 Quick Tunnel 方式](../README.md#b-无域名方式quick-tunnel)：无需 Cloudflare 账户和域名，一条命令启动、扫码导入临时地址和独立连接密钥。下文是有域名的 Tunnel + Access 方案；Quick Tunnel 不需要执行这些账户、令牌或 DNS 步骤。
 
 本文使用独立公网子域名、**远程管理的 Cloudflare Tunnel** 和 **Access Service Auth**。示例域名统一为 `dsh.example.com`，实际配置时全部替换成你自己的域名。不要复用陌生人的服务器或凭证。
 
 界面名称可能调整：Tunnel 可在 Cloudflare Dashboard 的 **Networking → Tunnels** 找到，部分账户也会显示在 Zero Trust 的 Networks / Connectors 下；Access 在 **Zero Trust → Access controls → Applications**。以下最终配置值比菜单位置更重要。
+
+**Windows 用户：** 云端步骤相同，本机工具、ACL、隧道启动和二维码步骤请配合 [Windows 指南](windows.md)。不执行下文的 Homebrew、chmod 或 LaunchAgent 命令；使用 `npm.cmd run tunnel --prefix bridge` 启动隧道。手机客户端也可以使用 Android，配置字段相同。
 
 ## 1. 准备账户、域名与工具
 

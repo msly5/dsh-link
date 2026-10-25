@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Store local secrets via hidden input; no values in command arguments or terminal output."""
+from private_config import protect_directory
 import argparse
 import getpass
 import json
@@ -13,7 +14,7 @@ p.add_argument('kind', choices=['tunnel', 'client'])
 p.add_argument('--config-dir', type=Path, default=Path(os.environ.get('DSH_REMOTE_CONFIG_DIR', Path.home()/'.config/dsh-remote')))
 a = p.parse_args(); directory = a.config_dir.expanduser().resolve()
 if directory == ROOT or ROOT in directory.parents: raise SystemExit('Secrets must be outside the repository.')
-directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+protect_directory(directory)
 destination = directory/('tunnel.token' if a.kind == 'tunnel' else 'client.json')
 if destination.exists(): raise SystemExit('File already exists. Revoke/rotate explicitly before replacing it.')
 if a.kind == 'tunnel':

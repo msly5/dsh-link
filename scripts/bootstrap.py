@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Prepare private configuration without modifying cloud resources or starting services."""
+from private_config import protect_directory
 import argparse
 import os
 from pathlib import Path
@@ -13,7 +14,7 @@ args = parser.parse_args()
 directory = args.config_dir.expanduser().resolve()
 if directory == ROOT or ROOT in directory.parents:
     raise SystemExit('Keep private configuration outside the repository.')
-directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+protect_directory(directory)
 config = directory/'bridge.env'
 if not config.exists():
     with config.open('x') as out:

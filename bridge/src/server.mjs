@@ -42,7 +42,7 @@ export function createBridge({ verify, target, push }) {
       return;
     }
     if (req.url === '/push/status' && req.method === 'GET') { json(res, 200, { enabled: Boolean(push) }); return; }
-    if (req.method !== 'POST' || !/^\/api\/[a-zA-Z0-9_/-]+$/.test(req.url || '')) {
+    if (req.method !== 'POST' || !(/^\/api\/[a-zA-Z0-9_/-]+$/.test(req.url || '') || req.url === '/api/$events/result')) {
       json(res, 404, { error: 'Not found' }); return;
     }
     const length = Number(req.headers['content-length']);

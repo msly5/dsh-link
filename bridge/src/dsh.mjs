@@ -24,14 +24,21 @@ export function mintCookie(authority, secretB64, now = Date.now()) {
   return `${name}=v1.${body}.${sig}`;
 }
 
-export function findDshPorts() {
-  const processes = execFileSync('/bin/ps', ['-axo', 'pid=,command='], { encoding: 'utf8', timeout: 3000 });
+export function findDshPorts(platform = process.platform, run = execFileSync) {
+  if (platform === 'win32') {
+    // Keep process command lines inside PowerShell: emit only loopback ports.
+    const script = `$ErrorActionPreference='Stop'; $ids=@(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'dsh-desktop-host[\\\\/]lib[\\\\/]index\\.js' } | ForEach-Object { $_.ProcessId }); if ($ids.Count) { Get-NetTCPConnection -State Listen | Where-Object { $_.LocalAddress -eq '127.0.0.1' -and $ids -contains $_.OwningProcess } | Select-Object -ExpandProperty LocalPort }`;
+    const output = run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {encoding:'utf8', timeout:15000, windowsHide:true});
+    return [...new Set(output.trim().split(/\s+/).filter(p => /^\d+$/.test(p)).map(Number))].filter(p => p > 0 && p <= 65535);
+  }
+  if (platform !== 'darwin') throw new Error('Automatic discovery supports macOS and Windows. Set DSH_UPSTREAM_PORT for another host.');
+  const processes = run('/bin/ps', ['-axo', 'pid=,command='], { encoding: 'utf8', timeout: 3000 });
   const pids = processes.split('\n').filter(line => line.includes('dsh-desktop-host/lib/index.js'))
     .map(line => line.trim().split(/\s+/)[0]).filter(pid => /^\d+$/.test(pid));
   const ports = new Set();
   for (const pid of pids) {
     try {
-      const listeners = execFileSync('/usr/sbin/lsof', ['-nP', '-a', '-p', pid, '-iTCP', '-sTCP:LISTEN', '-Fn'], { encoding: 'utf8', timeout: 3000 });
+      const listeners = run('/usr/sbin/lsof', ['-nP', '-a', '-p', pid, '-iTCP', '-sTCP:LISTEN', '-Fn'], { encoding: 'utf8', timeout: 3000 });
       for (const line of listeners.split('\n')) {
         const match = /^n127\.0\.0\.1:(\d+)$/.exec(line);
         if (match) ports.add(Number(match[1]));

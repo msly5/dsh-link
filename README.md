@@ -2,20 +2,23 @@
 
 **简体中文** · [English](README.en.md)
 
-在 iPhone 和 iPad 上继续 Mac 里的 DSH 会话。
+在 iPhone、iPad 和 Android 上继续 Mac 或 Windows 里的 DSH 会话。
 
-`非官方` · `个人自托管` · `iOS 17+` · `SwiftUI` · `MIT`
+`非官方` · `个人自托管` · `iOS 17+` · `Android 8+` · `SwiftUI / Compose` · `MIT`
 
 <img src="DSHRemote/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="96" alt="dsh link 黑色鲸鱼图标">
 
-**非官方、面向个人自托管的 iOS 客户端与 macOS 桥接服务。** 任务、模型调用和文件操作都在 Mac 上完成；手机用于发消息、发送图片、查看执行进度、处理审批和回答问题。需要自行安装并登录 DeepSeek Harness 桌面端。本仓库不包含 DSH 桌面软件。
+**非官方、面向个人自托管的 iOS / Android 客户端与 macOS / Windows 桥接服务。** 任务、模型调用和文件操作都在电脑上完成；手机用于发消息、发送图片、查看执行进度、处理审批和回答问题。需要自行安装并登录 DeepSeek Harness 桌面端。本仓库不包含 DSH 桌面软件。
 
 > **公开测试** — [通过 TestFlight 安装 dsh link](https://testflight.apple.com/join/KqMhXcHS)
 >
-> iPhone / iPad 先安装 TestFlight，再打开链接加入测试。Mac 桥接与连接配置仍需按下文完成。
+> iPhone / iPad 先安装 TestFlight，再打开链接加入测试。电脑桥接与连接配置仍需按下文完成。
+>
+> **Android / IPA 下载** — [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest)。Android 使用签名 APK；iOS 推荐 TestFlight，IPA 需要适用的 Apple 分发或重新签名，不能直接安装到任意 iPhone。[安装包说明](docs/releases.md)。
 
 ## 目录
 
+- [平台与安装](#平台与安装)
 - [功能概览](#功能概览)
 - [连接方式](#连接方式)
 - [环境要求](#环境要求)
@@ -27,16 +30,27 @@
 - [验证与开发](#验证与开发)
 - [安全与使用范围](#安全与使用范围)
 
+## 平台与安装
+
+| 手机 / 电脑 | 使用方式 | 验证范围 |
+| --- | --- | --- |
+| iPhone / iPad | [TestFlight](https://testflight.apple.com/join/KqMhXcHS)，或 Xcode 自行构建 | 已有真机与外部测试版本 1.0 (8) |
+| Android 8.0+ | [下载 APK](https://github.com/msly5/dsh-link/releases/latest) · [Android 指南](docs/android.md) | 新增 Kotlin / Compose 客户端，模拟器验证；尚未做 Android 真机验收 |
+| macOS + DSH | 按下文配置桥接 | 已验证真实 DSH 连接 |
+| Windows 10/11 + DSH | [Windows 配置指南](docs/windows.md)，支持同样的 Access / Quick Tunnel / 扫码 | 已补桥接适配和 Windows 自动化测试，真实 Windows DSH 连接待验证 |
+
+**两个手机客户端均可连接任一电脑平台。** Windows 用户无需 Xcode；Mac / Windows 都推荐长期使用域名 + Tunnel + Access，无域名时可用 Quick Tunnel。Android 首版暂无系统推送及离线磁盘会话缓存，详见 [Android 功能边界](docs/android.md#首版功能)。
+
 ## 功能概览
 
-- **SwiftUI 界面** — 自动跟随系统浅色 / 深色外观；侧栏切换最近对话与工作区，与桌面端共用同一个 DSH 后端。
+- **原生界面** — 自动跟随系统浅色 / 深色外观；侧栏切换最近对话与工作区，与桌面端共用同一个 DSH 后端。
 - **自适应 iPad** — 宽屏使用工作区 / 会话侧栏与聊天双栏，支持横竖屏；窄窗口自动切换抽屉侧栏，旋转保留当前聊天和输入草稿。
 - **工作区与归档** — 侧栏按桌面工作区展开 / 收起会话；对话列表可按工作区或时间分组。会话菜单支持归档，侧栏「已归档」可查看和恢复，状态同步到桌面端。
 - **流式与 Markdown** — 流式回复、可折叠的思考与工具执行记录、Markdown、可横向滚动的完整表格。
-- **图片与本地缓存** — 图片上传与查看；会话历史在设备本地缓存，按服务器和会话分隔。
-- **审批与推送** — 会话审批、提问及权限选择；可选 APNs 通知。
-- **两种连接方式** — 支持有域名的 Cloudflare Access 和免域名的 Quick Tunnel；可手动填写或扫描 Mac 二维码导入连接；凭证保存在设备 Keychain，源码和 App 内没有预置凭证。
-- **配套工具** — 自带 Mac 端桥接、安装/诊断脚本和 AI 配置指南。
+- **图片与缓存** — 图片上传与查看；iOS 提供磁盘缓存，Android 首版使用内存缓存，按服务器和会话分隔。
+- **审批与推送** — 会话审批、提问及权限选择；iOS 可选 APNs 通知。
+- **两种连接方式** — 支持有域名的 Cloudflare Access 和免域名的 Quick Tunnel；可手动填写或扫描电脑二维码导入连接；iOS 凭证保存在 Keychain，Android 凭证通过 Keystore 加密保存，源码和 App 内没有预置凭证。
+- **配套工具** — 自带 Mac / Windows 端桥接、安装/诊断脚本和 AI 配置指南。
 
 <img src="docs/screens/dsh-link/iphone-home.jpg" width="220" alt="dsh link 实机首页与黑色鲸鱼"> <img src="docs/screens/dsh-link/iphone-sidebar.jpg" width="220" alt="dsh link 实机工作区与会话侧栏"> <img src="docs/screens/dsh-link/iphone-chat.jpg" width="220" alt="dsh link 实机聊天页与完整表格">
 
@@ -49,19 +63,19 @@
 | 日常使用、长期远程连接 | **域名 + Tunnel + Access（推荐）** |
 | 无域名、先体验一下 | **Quick Tunnel（临时）** |
 
-**推荐长期使用「自己的域名 + Cloudflare Tunnel + Access」。** 手机保存固定地址和有效的 Service Token 后，Mac 桥接或隧道正常重启无需重新扫码；可设置登录后自动运行，也能给每台设备单独发放、续期和撤销令牌。没有域名、想先体验时，可以使用 Quick Tunnel。
+**推荐长期使用「自己的域名 + Cloudflare Tunnel + Access」。** 手机保存固定地址和有效的 Service Token 后，电脑桥接或隧道正常重启无需重新扫码；可设置登录后自动运行，也能给每台设备单独发放、续期和撤销令牌。没有域名、想先体验时，可以使用 Quick Tunnel。
 
 | 对比项 | 域名 + Tunnel + Access（推荐） | Quick Tunnel（临时体验） |
 | --- | --- | --- |
 | 准备条件 | 自己的 Cloudflare 账户、接入的域名、Zero Trust / Access | 不需要 Cloudflare 账户或域名 |
 | 手机填写 | 固定 HTTPS 地址、Service Token 的 Client ID / Client Secret；支持扫码 | 临时 HTTPS 地址、64 位连接密钥；支持扫码 |
 | 重启与后台运行 | 保留域名和有效凭证即可继续连接；支持登录后自动运行 | 终端需保持运行，每次重新启动都要重新扫码 |
-| 多台 iPhone / iPad | 可以连接同一 Mac，推荐每台设备使用独立 Service Token | 可以连接同一 Mac，本次运行的设备共用连接密钥 |
+| 多台 iPhone / iPad / Android | 可以连接同一电脑，推荐每台设备使用独立 Service Token | 可以连接同一电脑，本次运行的设备共用连接密钥 |
 | 撤销某台设备 | 撤销其独立 Service Token；必要时重启桥接断开旧连接 | 需停止并重启，所有设备重新扫码 |
 | 推送通知 | 可选 APNs，需单独配置 | 当前未启用 APNs |
 | 适用场景 | 日常使用、长期远程连接 | 无域名试用、临时测试 |
 
-域名方式提供固定入口和更方便的设备管理；Mac 仍需保持开机、联网且 DSH 正在运行，不能保证 Mac 睡眠或离线时可连接。Quick Tunnel 的临时地址没有可用性保证，长期使用建议切换到域名方式。
+域名方式提供固定入口和更方便的设备管理；电脑仍需保持开机、联网且 DSH 正在运行，不能保证 电脑睡眠或离线时可连接。Quick Tunnel 的临时地址没有可用性保证，长期使用建议切换到域名方式。
 
 > **Quick Tunnel 从 1.0 (8) 构建开始提供，已开放外部测试。通过上方 TestFlight 链接安装或更新；如果设置页没有“Quick Tunnel”，请确认已更新到 1.0 (8) 或更新构建。也可从源码构建。** 两种方式都使用 HTTPS/WSS，Mac 桥接都验证凭证；Quick Tunnel 的独立连接密钥不依赖 Access。
 
@@ -80,9 +94,9 @@ Access 在 Cloudflare 边缘验证手机的 Service Token。Mac 桥接再次验�
 
 | 项目 | 要求 |
 | --- | --- |
-| Mac | 已安装并运行 DeepSeek Harness，已登录，已有一个可用会话 |
+| Mac / Windows | 已安装并运行 DeepSeek Harness，已登录，已有一个可用会话 |
 | iPhone / iPad | iOS / iPadOS 17 或更新版本 |
-| Xcode | 16 或更新版本；当前整理版本用 Xcode 27.1 构建验证 |
+| Xcode（仅 iOS 源码构建 / Mac 二维码） | 16 或更新版本；当前整理版本用 Xcode 27.1 构建验证 |
 | Node.js | 22 或更新版本，推荐当前 LTS；包含 npm |
 | Python | Python 3，供配置/服务/安全检查脚本使用 |
 | cloudflared | 支持 `--token-file` 的版本，至少 `2025.4.0` |
@@ -91,15 +105,17 @@ Access 在 Cloudflare 边缘验证手机的 Service Token。Mac 桥接再次验�
 
 > **Mac 必须保持开机、联网且 DSH 桌面端在运行。** 手机不需要安装 cloudflared，也不需要暴露 Mac 入站端口。
 
+Windows 用户先读 [Windows 配置指南](docs/windows.md)。以下 `brew`、`open`、`cp` 和 LaunchAgent 命令仅适用于 macOS；Windows 使用 `npm.cmd` 和 PowerShell，不执行 Mac 安装步骤。
+
 ## 让 AI 帮你配置
 
-把这个仓库拉到 Mac，用能访问本机文件和终端的 AI 打开。**推荐域名方式，准备好自己的域名后使用以下指令：**
+把这个仓库拉到你的电脑，用能访问本机文件和终端的 AI 打开。**推荐域名方式，准备好自己的域名后使用以下指令：**
 
-> 请阅读此仓库的 AGENTS.md、docs/ai-setup.md 和 docs/cloudflare.md，帮我配置 dsh link。先检查 Mac 上的 DSH、Node、Xcode 和 cloudflared。我的目标域名是 `<你的域名>`。新建独立的 Tunnel、Access 应用和 Service Auth 策略，使用我明确指定的 Cloudflare 账户和域名。敏感凭证从仓库外的私有文件或安全输入读取，不回显、不写进源码、不提交 Git。完成桥接、隧道和 iOS 构建配置后，分别验证无凭证被拒绝、带凭证的 RPC 与 WebSocket 正常，最后告诉我手机需要填写的字段和私有文件位置。
+> 请阅读此仓库的 AGENTS.md、docs/ai-setup.md 和 docs/cloudflare.md，帮我配置 dsh link。先识别 Mac / Windows，再检查 DSH、Node、Python 和 cloudflared；仅 Mac 二维码或 iOS 源码构建检查 Xcode。Windows 额外阅读 docs/windows.md。我的目标域名是 `<你的域名>`。新建独立的 Tunnel、Access 应用和 Service Auth 策略，使用我明确指定的 Cloudflare 账户和域名。敏感凭证从仓库外的私有文件或安全输入读取，不回显、不写进源码、不提交 Git。完成桥接、隧道和所选手机平台的安装配置后，分别验证无凭证被拒绝、带凭证的 RPC 与 WebSocket 正常，最后告诉我手机需要填写的字段和私有文件位置。
 
 **没有域名、仅先体验 Quick Tunnel 时，使用以下指令：**
 
-> 请阅读此仓库的 AGENTS.md、README.md 中的 Quick Tunnel 部分和 docs/ai-setup.md，帮我用免域名的 Quick Tunnel 配置 dsh link。检查 Mac 上的 DSH、Node、cloudflared 和 Xcode 命令行工具，安装 bridge 依赖，运行 npm run quick --prefix bridge，显示本地连接二维码。保留已有域名连接，不创建 Cloudflare 账户、域名、Access 或 Tunnel Token，不输出或保存连接密钥。验证公网无密钥与错误密钥被拒绝、正确凭证的 HTTP 与 WebSocket 可用，再帮我构建支持 Quick Tunnel 的 iOS 客户端。告诉我手机如何扫码和停止临时连接。
+> 请阅读此仓库的 AGENTS.md、README.md 中的 Quick Tunnel 部分和 docs/ai-setup.md，帮我用免域名的 Quick Tunnel 配置 dsh link。识别 Mac / Windows，检查 DSH、Node 和 cloudflared；仅 Mac 检查 Xcode 命令行工具。安装 bridge 依赖，运行 npm run quick --prefix bridge，显示本地连接二维码。保留已有域名连接，不创建 Cloudflare 账户、域名、Access 或 Tunnel Token，不输出或保存连接密钥。验证公网无密钥与错误密钥被拒绝、正确凭证的 HTTP 与 WebSocket 可用，再帮我安装支持 Quick Tunnel 的 iOS 或 Android 客户端。告诉我手机如何扫码和停止临时连接。
 
 AI 能自动完成本地安装、文件生成、诊断及已授权的 Cloudflare 操作。Cloudflare/Apple 登录、账户选择、付款、手机信任开发者等交互可能仍需你本人完成。
 
@@ -135,10 +151,10 @@ python3 scripts/bootstrap.py
 npm run doctor --prefix bridge
 npm start --prefix bridge
 # 另开一个终端，仍在仓库根目录：
-sh scripts/run-tunnel.sh
+npm run tunnel --prefix bridge
 ```
 
-4. **构建手机端**
+4. **安装手机端** — iOS 可直接使用 TestFlight，Android 可直接安装 Release APK；仅自行构建 iOS 时执行下面的 Xcode 步骤。
 
 ```bash
 cp config/Local.example.xcconfig config/Local.xcconfig
@@ -160,13 +176,13 @@ npm run pair --prefix bridge
 
 iPhone 打开 **连接设置 → 扫描 Mac 连接二维码**，或用系统相机扫码打开 App。服务器与凭证会自动填入；确认服务器后点「保存」即可连接。拒绝相机权限时仍可手动填写。Mac 窗口 5 分钟后关闭，App 拒绝过期的二维码。
 
-> **二维码等同凭证。** 由 macOS 原生 Core Image 在本机内存生成，不启动网页、不请求外部二维码服务、不打印凭证。它包含完整 Service Token，**不要截图、分享或提交到仓库**。过期只限制 App 导入，不会撤销 Token；如泄露，需在 Cloudflare 撤销。可运行 `npm run pair --prefix bridge -- --check` 验证二维码本地生成与识别，不显示二维码。
+> **二维码等同凭证。** 由 Mac Core Image 或 Windows 本地二维码库在内存生成，并通过原生窗口显示，不启动网页、不请求外部二维码服务、不打印凭证。它包含完整 Service Token，**不要截图、分享或提交到仓库**。过期只限制 App 导入，不会撤销 Token；如泄露，需在 Cloudflare 撤销。可运行 `npm run pair --prefix bridge -- --check` 检查本地二维码生成（Mac 还会解码识别），不显示二维码。
 
 不要把 Cloudflare API Token、Tunnel Token 或 DSH 登录密钥填到手机上。手机只需要 **Service Token** 的两项凭证。
 
 ### B. 无域名方式：Quick Tunnel
 
-1. 打开并登录 Mac 上的 DSH，保持 Mac 联网。在仓库根目录运行（缺少工具且已安装 Homebrew 时，先执行 `brew install node cloudflared`）：
+1. 打开并登录电脑上的 DSH，保持电脑联网。Windows 使用 `npm.cmd`，工具安装见 [Windows 指南](docs/windows.md)。在仓库根目录运行（缺少工具且已安装 Homebrew 时，先执行 `brew install node cloudflared`）：
 
 ```bash
 npm run quick --prefix bridge
@@ -191,7 +207,7 @@ Quick Tunnel 面向临时测试，没有可用性保证；重建隧道后地址�
 
 本节用于有域名的 Access 模式。Quick Tunnel 使用上方前台命令，随时停止和重新扫码。
 
-### 安装 LaunchAgent
+### 安装 LaunchAgent（仅 macOS）
 
 手动启动确认正常后，退出前台 bridge / cloudflared，再运行：
 
@@ -199,7 +215,7 @@ Quick Tunnel 面向临时测试，没有可用性保证；重建隧道后地址�
 python3 scripts/service.py install
 ```
 
-安装两个当前用户的 LaunchAgent：`app.dshremote.bridge`、`app.dshremote.tunnel`。它们引用当前仓库的绝对路径，移动仓库后需卸载重装；登录 Mac 后启动，Mac 睡眠或退出登录时无法保证后台连接。日志保存在私有配置目录，不记录请求内容或凭证。不会修改 DSH 的启动项。
+安装两个当前用户的 LaunchAgent：`app.dshremote.bridge`、`app.dshremote.tunnel`。它们引用当前仓库的绝对路径，移动仓库后需卸载重装；登录 Mac 后启动，电脑睡眠或退出登录时无法保证后台连接。日志保存在私有配置目录，不记录请求内容或凭证。不会修改 DSH 的启动项。
 
 ```bash
 python3 scripts/service.py uninstall
@@ -236,7 +252,8 @@ Swift Package 运行协议、会话缓存、图片、执行记录和连接配置
 | --- | --- |
 | `DSHRemote/` | 原生 SwiftUI 客户端、Keychain、RPC、会话缓存 |
 | `DSHRemote.xcodeproj/` | iOS 工程和共享 scheme |
-| `bridge/` | Mac 桥接、Access JWT 校验、可选 APNs 监听 |
+| `android/` | Kotlin / Compose 客户端、Android Keystore、协议与 UI 测试 |
+| `bridge/` | Mac / Windows 桥接、Access JWT 校验、可选 APNs 监听 |
 | `config/` | 通用签名配置、推送 entitlements 示例 |
 | `scripts/` | 私有配置准备、隐藏输入、LaunchAgent、发布前检查 |
 | `docs/cloudflare.md` | Cloudflare 逐步配置及故障排查 |

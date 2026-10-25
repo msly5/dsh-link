@@ -3,8 +3,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { configDir } from './config.mjs';
+import QRCode from 'qrcode';
 
 export async function openPairingWindow(invitation, { check = false } = {}) {
+  if (process.platform === 'win32') {
+    const script = fileURLToPath(new URL('../../scripts/pair-window.ps1', import.meta.url));
+    const png = await QRCode.toBuffer(invitation.link, {type:'png', width:640, margin:4, errorCorrectionLevel:'M'});
+    const child = spawn('powershell.exe', ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', script, ...(check ? ['-Check'] : [])], {stdio:['pipe','inherit','inherit'], windowsHide:true});
+    child.stdin.on('error', () => {});
+    child.stdin.end(JSON.stringify({...invitation, png:png.toString('base64')}));
+    return child;
+  }
   if (process.platform !== 'darwin') throw new Error('The local QR window requires macOS and Xcode command-line tools.');
   const script = fileURLToPath(new URL('../../scripts/pair-window.swift', import.meta.url));
   const directory = configDir();

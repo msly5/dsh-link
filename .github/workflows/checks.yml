@@ -27,3 +27,29 @@ jobs:
       - run: xcodebuild -version
       - run: swift test
       - run: xcodebuild -project DSHRemote.xcodeproj -scheme DSHRemote -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+  windows-bridge:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: bridge/package-lock.json
+      - run: npm ci --ignore-scripts --prefix bridge
+      - run: npm test --prefix bridge
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleRelease
+        working-directory: android

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { connectionHeaders } from './connection-key.mjs';
+import { assertPrivate } from './private-files.mjs';
 
 const repository = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 
@@ -35,10 +36,10 @@ export function readPairingClient(directory) {
   const relative = path.relative(repository, file);
   const relativeDirectory = path.relative(repository, realDirectory);
   if (!relative.startsWith('..' + path.sep) || !relativeDirectory.startsWith('..' + path.sep) ||
-      (directoryStat.mode & 0o077) !== 0 || !directoryStat.isDirectory() || directoryStat.uid !== process.getuid() ||
-      (stat.mode & 0o077) !== 0 || stat.uid !== process.getuid() || !stat.isFile() || stat.size > 32_768) {
+      !directoryStat.isDirectory() || !stat.isFile() || stat.size > 32_768) {
     throw new Error('Use an owned 0700 directory and a private 0600 client.json outside the repository.');
   }
+  assertPrivate(realDirectory); assertPrivate(file);
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   catch { throw new Error('Private client.json is not valid JSON.'); }
 }
