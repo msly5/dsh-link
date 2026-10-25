@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {spawn, execFileSync} from 'node:child_process';
 import {once} from 'node:events';
+import {fileURLToPath} from 'node:url';
 import {findDshPorts} from '../src/dsh.mjs';
 import {openPairingWindow} from '../src/pair-window.mjs';
 import {pairingInvitation} from '../src/pairing.mjs';
@@ -31,8 +32,15 @@ test('Windows discovers a real host process and renders a local QR image', {skip
     assert.ok(findDshPorts().includes(Number(port.toString().trim())));
     const qr=await openPairingWindow(pairingInvitation({server_url:'https://fixture.trycloudflare.com',auth_mode:'quick_tunnel',connection_key:'a'.repeat(64)}),{check:true});
     const [code]=await once(qr,'exit');assert.equal(code,0);
-    execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',
-      "$ErrorActionPreference='Stop'; $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User; $acl=[Security.AccessControl.DirectorySecurity]::new(); $acl.SetOwner($sid); $acl.SetAccessRuleProtection($true,$false); $acl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow')); Set-Acl -LiteralPath $env:DSH_PRIVATE_PATH -AclObject $acl"],{env:{...process.env,DSH_PRIVATE_PATH:dir},stdio:['ignore','ignore','inherit']});
+    execFileSync('python',['-c',
+      "import os, sys; from pathlib import Path; sys.path.insert(0, os.environ['DSH_TEST_SCRIPTS']); from private_config import protect_directory; protect_directory(Path(os.environ['DSH_PRIVATE_PATH']))"],
+      {env:{...process.env,DSH_PRIVATE_PATH:dir,DSH_TEST_SCRIPTS:fileURLToPath(new URL('../../scripts/',import.meta.url))},stdio:['ignore','ignore','inherit']});
     assert.doesNotThrow(()=>assertPrivate(dir));
+    const config=path.join(dir,'fixture.json');fs.writeFileSync(config,'{}');
+    assert.doesNotThrow(()=>assertPrivate(config));
+    execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',
+      "$ErrorActionPreference='Stop'; $acl=[IO.File]::GetAccessControl($env:DSH_PRIVATE_PATH); $everyone=[Security.Principal.SecurityIdentifier]::new('S-1-1-0'); $acl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($everyone,'Read','Allow')); [IO.File]::SetAccessControl($env:DSH_PRIVATE_PATH,$acl)"],
+      {env:{...process.env,DSH_PRIVATE_PATH:config},stdio:['ignore','ignore','inherit']});
+    assert.throws(()=>assertPrivate(config),/Private configuration ACL/);
   } finally {child.kill();await once(child,'exit');fs.rmSync(dir,{recursive:true,force:true});}
 });
