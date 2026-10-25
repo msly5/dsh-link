@@ -8,7 +8,9 @@ export function assertPrivate(file) {
     return;
   }
   // Compare SIDs, not localized account names. Never print the ACL or file contents.
-  const script = `$ErrorActionPreference='Stop'; if ([IO.Directory]::Exists($env:DSH_PRIVATE_PATH)) { $acl=[IO.Directory]::GetAccessControl($env:DSH_PRIVATE_PATH) } else { $acl=[IO.File]::GetAccessControl($env:DSH_PRIVATE_PATH) }; $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value; $owner=$acl.GetOwner([Security.Principal.SecurityIdentifier]).Value; if ($owner -ne $sid) { exit 1 }; foreach ($rule in $acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier])) { if ($rule.AccessControlType -eq 'Allow' -and $rule.IdentityReference.Value -notin @($sid,'S-1-5-18','S-1-5-32-544')) { exit 1 } }`;
+  // Elevated Windows processes may create files owned by Administrators. Those
+  // principals already have system-level access; unrelated users remain denied.
+  const script = `$ErrorActionPreference='Stop'; if ([IO.Directory]::Exists($env:DSH_PRIVATE_PATH)) { $acl=[IO.Directory]::GetAccessControl($env:DSH_PRIVATE_PATH) } else { $acl=[IO.File]::GetAccessControl($env:DSH_PRIVATE_PATH) }; $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value; $owner=$acl.GetOwner([Security.Principal.SecurityIdentifier]).Value; if ($owner -notin @($sid,'S-1-5-18','S-1-5-32-544')) { exit 1 }; foreach ($rule in $acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier])) { if ($rule.AccessControlType -eq 'Allow' -and $rule.IdentityReference.Value -notin @($sid,'S-1-5-18','S-1-5-32-544')) { exit 1 } }`;
   try { execFileSync('powershell.exe', ['-NoProfile','-NonInteractive','-Command',script], {env:{...process.env,DSH_PRIVATE_PATH:file},stdio:'ignore',windowsHide:true,timeout:15000}); }
   catch { throw new Error('Private configuration ACL must permit only your Windows account, SYSTEM and Administrators. Run scripts/bootstrap.py.'); }
 }
