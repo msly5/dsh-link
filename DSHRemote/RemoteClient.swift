@@ -141,7 +141,7 @@ actor RemoteClient {
         let server = baseURL ?? AppConfig.baseURL
         var request = URLRequest(url: AppConfig.webSocketURL(for: server))
         for (key, value) in AppConfig.accessHeaders(for: server) { request.setValue(value, forHTTPHeaderField: key) }
-        let socket = session.webSocketTask(with: request)
+        let socket = SecureTransport.webSocketTask(session: session, request: request)
         socket.resume()
         defer { socket.cancel(with: .goingAway, reason: nil) }
         return try await withTaskCancellationHandler {

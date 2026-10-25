@@ -137,7 +137,7 @@ final class ChatStream: ObservableObject {
         for (key, value) in AppConfig.accessHeaders(for: serverURL) {
             request.setValue(value, forHTTPHeaderField: key)
         }
-        let socket = Self.socketSession.webSocketTask(with: request)
+        let socket = SecureTransport.webSocketTask(session: Self.socketSession, request: request)
         task = socket
         socket.resume()
         send(socket, ["type": "open", "streamId": "events", "endpoint": "$events", "payload": ["args": [:]]])
