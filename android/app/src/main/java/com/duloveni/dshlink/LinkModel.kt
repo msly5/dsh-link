@@ -228,7 +228,8 @@ class LinkModel(app: Application) : AndroidViewModel(app) {
                 if (token==generation) {
                     draft=""; images=emptyList(); promptId=""; drafts.remove(id)
                     if(kind==SubmissionKind.PROMPT && activityAtSend==activityRevision) running=true
-                    if(kind==SubmissionKind.COMMAND) refresh()
+                    // Commands can replace context or change permissions without a model turn.
+                    if(kind==SubmissionKind.COMMAND) { refresh(); reconnect() }
                 }
             } catch(e: Exception) { if (token==generation) failure(e) }
             finally { if (token==generation) sending=false }
