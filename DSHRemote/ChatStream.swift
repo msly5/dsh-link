@@ -22,6 +22,10 @@ final class ChatStream: ObservableObject {
     @Published private(set) var sessionModel = ""
     @Published private(set) var sessionEffort = ""
     @Published private(set) var modelGroups: [ModelProviderGroup] = []
+    @Published private(set) var commands: [CommandDescriptor] = []
+    @Published private(set) var loadingCommands = false
+    @Published private(set) var commandsError: String?
+    private var loadedCommands = false
     @Published private(set) var updatingSelection = false
     @Published private(set) var cancelling = false
     @Published private var submittingCommand = false
@@ -484,6 +488,23 @@ final class ChatStream: ObservableObject {
         catch { errorText = error.localizedDescription }
     }
 
+    func loadCommands(force: Bool = false) async {
+        #if DEBUG && canImport(UIKit)
+        if DesignPreview.enabled { return }
+        #endif
+        guard !loadingCommands, force || !loadedCommands else { return }
+        loadingCommands = true
+        commandsError = nil
+        defer { loadingCommands = false }
+        do {
+            let catalog = try await client.commandCatalog(sessionId: sessionId, baseURL: serverURL)
+            try Task.checkCancellation()
+            commands = catalog
+            loadedCommands = true
+        } catch is CancellationError { }
+        catch { commandsError = "无法读取指令，请重试。" }
+    }
+
     func loadMeta() async {
         do {
             let catalog = try await client.permissionCatalog()
@@ -592,6 +613,11 @@ final class ChatStream: ObservableObject {
 extension ChatStream {
     func loadDesignPreview() {
         messages = DesignPreview.messages
+        commands = [
+            CommandDescriptor(name: "compact", description: "压缩当前会话的上下文", input: nil),
+            CommandDescriptor(name: "permission", description: "查看或设置会话权限", input: .init(hint: "权限预设")),
+        ]
+        loadedCommands = true
         connected = true
         running = false
         modelLabel = "DeepSeek"

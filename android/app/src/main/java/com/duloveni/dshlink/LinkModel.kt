@@ -33,6 +33,9 @@ class LinkModel(app: Application) : AndroidViewModel(app) {
     var answering by mutableStateOf(false); private set
     var catalog by mutableStateOf(JSONObject()); private set
     var permissions by mutableStateOf<List<JSONObject>>(emptyList()); private set
+    var commands by mutableStateOf<List<CommandDescriptor>>(emptyList()); private set
+    var loadingCommands by mutableStateOf(false); private set
+    var commandsError by mutableStateOf<String?>(null); private set
     var values by mutableStateOf(JSONObject()); private set
     var draft by mutableStateOf("")
     var images by mutableStateOf<List<PendingImage>>(emptyList())
@@ -68,6 +71,7 @@ class LinkModel(app: Application) : AndroidViewModel(app) {
         sessions=emptyList(); workspaces=emptyList(); archived=emptySet(); selected=null; rows=emptyList()
         cache.clear(); drafts.clear(); draft=""; images=emptyList(); pending=emptyList(); error=null; busy=false
         catalog=JSONObject(); permissions=emptyList(); values=JSONObject(); sending=false; loadingHistory=false
+        commands=emptyList(); commandsError=null
         refresh()
     }
     fun refresh() {
@@ -93,6 +97,7 @@ class LinkModel(app: Application) : AndroidViewModel(app) {
         stopSocket(); selected=session; pending=emptyList(); seenEvents.clear(); error=null; liveText=""; reasoning=""
         rows=session?.let { cache[it.id] }.orEmpty(); draft=session?.let { drafts[it.id]?.first }.orEmpty(); images=session?.let { drafts[it.id]?.second }.orEmpty()
         cursor=-1; historyCursor=-1; hasMore=false; loadingHistory=false; sending=false; answering=false; running=session?.running==true; values=session?.values ?: JSONObject()
+        commands=emptyList(); commandsError=null
         if (session != null) { connect(); loadCatalogs() }
     }
     fun setActive(value: Boolean) {
@@ -100,7 +105,7 @@ class LinkModel(app: Application) : AndroidViewModel(app) {
         if (!value) { selected?.let { cache[it.id]=rows }; stopSocket() }
         else { refresh(); if (selected!=null && socket==null) connect() }
     }
-    private fun stopSocket() { generation++; retry?.cancel(); timeout?.cancel(); val old=socket; socket=null; old?.cancel(); connected=false; clientId=""; sending=false; answering=false; loadingHistory=false }
+    private fun stopSocket() { generation++; retry?.cancel(); timeout?.cancel(); val old=socket; socket=null; old?.cancel(); connected=false; clientId=""; sending=false; answering=false; loadingHistory=false; loadingCommands=false }
     fun reconnect() { stopSocket(); retryCount=0; connect() }
     private fun connect() {
         if (!active) return
@@ -147,6 +152,7 @@ class LinkModel(app: Application) : AndroidViewModel(app) {
                 liveText=Events.stream(activeAttempt.objects("stream"),"text"); reasoning=Events.stream(activeAttempt.objects("stream"),"reasoning")
                 if (attempt.isNotEmpty()) running=true
                 connected=true; retryCount=0; error=null; timeout?.cancel()
+                loadCommands()
             }
             "event" -> {
                 val event=value.child("event"); val seq=event.optInt("seq",cursor+1); if (seq<=cursor) return
@@ -183,6 +189,20 @@ class LinkModel(app: Application) : AndroidViewModel(app) {
         }
     }
     private fun activity(event: JSONObject) { if(event.optString("type") in setOf("turn/start","step/start","turn/end")) activityRevision++; when(event.optString("type")) { "turn/start","step/start" -> running=true; "turn/end" -> { running=false; liveText=""; reasoning=""; refresh() } } }
+    fun loadCommands() {
+        val api=client ?: return; val session=selected ?: return
+        if (loadingCommands) return
+        val token=generation
+        loadingCommands=true; commandsError=null
+        viewModelScope.launch {
+            try {
+                val result=api.commandCatalog(session.id)
+                if (token==generation) commands=result
+            } catch (e: Exception) {
+                if (token==generation && e !is CancellationException) commandsError="无法读取指令，请重试。"
+            } finally { if (token==generation) loadingCommands=false }
+        }
+    }
     private fun loadCatalogs() {
         val api=client ?: return; val revision=profileRevision
         viewModelScope.launch {

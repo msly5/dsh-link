@@ -120,6 +120,11 @@ actor RemoteClient {
         }
     }
 
+    func commandCatalog(sessionId: String, baseURL: URL? = nil) async throws -> [CommandDescriptor] {
+        let value = try await call("commands/list", args: ["agentId": sessionId], baseURL: baseURL)
+        return try CommandDescriptor.decode(value)
+    }
+
     func executeCommand(sessionId: String, line: String, images: [ImageAttachment] = []) async throws {
         let line = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let name = SlashCommand.name(in: line) else { throw RemoteError(message: "指令格式无效。") }

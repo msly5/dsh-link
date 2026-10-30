@@ -70,7 +70,7 @@ struct SessionSidebar: View {
                         .frame(width: 46, height: 46)
                         .background(Theme.bg, in: .circle)
                         .overlay { Circle().strokeBorder(Theme.stroke, lineWidth: 0.75) }
-                }.buttonStyle(NavigationRowButtonStyle()).accessibilityLabel("连接设置")
+                }.buttonStyle(NavigationRowButtonStyle()).accessibilityLabel("设置")
                 if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
                 Button(action: onNew) {
                     Label("新建对话", systemImage: "plus").font(.subheadline.weight(.medium))

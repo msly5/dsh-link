@@ -11,6 +11,7 @@ struct ChatComposer: View {
     let onSend: () -> Void
     let onModels: () -> Void
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var suggestionQuery: String? { focus.wrappedValue && !sending ? SlashCommand.suggestionQuery(in: input) : nil }
 
     private var canSend: Bool {
         stream.connected && !sending && !stream.cancelling
@@ -26,6 +27,13 @@ struct ChatComposer: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if !images.isEmpty { PendingImageStrip(images: $images, disabled: sending) }
+            if let query = suggestionQuery {
+                CommandSuggestionsView(commands: stream.commands, query: query, loading: stream.loadingCommands,
+                                       error: stream.commandsError, refresh: { Task { await stream.loadCommands(force: true) } }) { command in
+                    input = "/\(command.name) "
+                    focus.wrappedValue = true
+                }
+            }
             TextField("消息内容", text: $input, prompt: Text("回复 DSH…").foregroundStyle(Theme.muted), axis: .vertical)
                 .focused(focus).font(.body).foregroundStyle(Theme.text)
                 .lineLimit(1...6).disabled(sending)
@@ -51,6 +59,12 @@ struct ChatComposer: View {
         .padding(10)
         .background(Theme.card, in: .rect(cornerRadius: 23))
         .overlay { RoundedRectangle(cornerRadius: 23).strokeBorder(focus.wrappedValue ? Theme.muted.opacity(0.5) : Theme.stroke, lineWidth: 0.9) }
+        .task(id: suggestionQuery != nil) {
+            if suggestionQuery != nil { await stream.loadCommands() }
+        }
+        .onChange(of: stream.connected) { _, connected in
+            if connected && suggestionQuery != nil { Task { await stream.loadCommands(force: true) } }
+        }
     }
 
     private var attachmentButton: some View {

@@ -8,6 +8,7 @@ struct SettingsView: View {
     let pairingURL: URL?
     init(pairingURL: URL? = nil) { self.pairingURL = pairingURL }
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("appearanceMode") private var appearance: AppearanceMode = .system
     @State private var server = ""
     @State private var clientID = ""
     @State private var clientSecret = ""
@@ -34,6 +35,14 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("外观").font(.headline).foregroundStyle(Theme.text)
+                        Picker("外观", selection: $appearance) {
+                            ForEach(AppearanceMode.allCases) { mode in Text(mode.title).tag(mode) }
+                        }.pickerStyle(.segmented)
+                        Text("立即生效，自动保存。默认跟随系统。").font(.footnote).foregroundStyle(Theme.muted)
+                    }
+                    Divider()
                     Text("连接你的 Mac").font(.system(.title2, design: .serif)).foregroundStyle(Theme.text)
                     Text("选择域名连接或免域名的 Quick Tunnel，也可以扫描 Mac 二维码。凭证仅保存在本机系统钥匙串中。")
                         .font(.subheadline).foregroundStyle(Theme.muted)
@@ -72,7 +81,7 @@ struct SettingsView: View {
                 }.padding(Theme.Space.screen).frame(maxWidth: 680).frame(maxWidth: .infinity)
             }
             .background(Theme.bg)
-            .navigationTitle("连接设置").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("设置").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) { Button("保存") { save() }.bold().disabled(previewing) }
@@ -120,6 +129,7 @@ struct SettingsView: View {
                 }
             }
         }.tint(Theme.accent)
+            .preferredColorScheme(appearance.colorScheme)
     }
 
     private func clearResult() { validationError = nil; testResult = nil }

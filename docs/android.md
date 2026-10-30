@@ -4,17 +4,18 @@
 
 ## 安装与连接
 
-1. 从 [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest) 下载 `dsh-link-android-1.0.1.apk`。支持 Android 8.0+（API 26）。这是签名的 Release 包，不需要 Android Studio。
+1. 从 [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest) 下载 `dsh-link-android-1.0.2.apk`。支持 Android 8.0+（API 26）。这是签名的 Release 包，不需要 Android Studio。
 2. 打开 APK，按系统提示仅为当前浏览器或文件管理器允许安装；安装完成后可关闭该权限。后续版本用同一签名覆盖安装。
 3. 在 Mac 或 Windows 配好桥接。长期使用推荐**域名 + Cloudflare Tunnel + Access**；无域名可用 Quick Tunnel。
-4. 手机进入「连接设置」，扫描电脑二维码或手动填写。Access 填 HTTPS 地址、Client ID、Client Secret；Quick Tunnel 填临时 HTTPS 地址、连接密钥。
+4. 手机进入「设置」，扫描电脑二维码或手动填写。Access 填 HTTPS 地址、Client ID、Client Secret；Quick Tunnel 填临时 HTTPS 地址、连接密钥。
 5. 点「测试连接」，成功后点「保存」。测试本身不会保存；更换地址会清除旧地址的凭证。二维码会在 5 分钟后失效，仅限制新导入，不撤销已经保存的连接。
 
 Android 使用同一个 `dshremote://configure` 配置协议。凭证通过 Android Keystore 生成的 AES-GCM 密钥加密保存，不进入云备份。应用内无内置服务器和密钥。
 
 ## 首版功能
 
-- 简洁浅色 / 深色界面，宽屏侧栏与聊天双栏。
+- 简洁浅色 / 深色界面，宽屏侧栏与聊天双栏；「设置 → 外观」支持跟随系统（默认）、浅色、深色，立即生效并自动保存。
+- 输入 `/` 弹出当前会话的指令候选，按名称过滤，点选补全后手动发送。
 - 桌面工作区分组、已有会话、新建会话、归档与恢复。
 - WebSocket 流式回复、断线重连、历史分页、按当前连接与会话隔离的内存缓存及草稿。
 - 图片选择、压缩、发送和点按加载历史附件。
@@ -57,9 +58,11 @@ Release 不接受 fixture 配置，禁止明文 HTTP，且不会自动加载远�
 
 ## English
 
-Download the signed `dsh-link-android-1.0.1.apk` from [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest) on Android 8.0+. Allow installation for the app opening the APK, install, and optionally revoke that permission afterward. Future releases use the same signing key.
+Download the signed `dsh-link-android-1.0.2.apk` from [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest) on Android 8.0+. Allow installation for the app opening the APK, install, and optionally revoke that permission afterward. Future releases use the same signing key.
 
-Set up the bridge on **Mac or Windows**. A domain with Cloudflare Tunnel + Access is recommended for everyday use; Quick Tunnel is available without a domain. Open connection settings, scan the computer's QR code or enter the HTTPS server and Access Service Token / Quick Tunnel key, then test and save. Tests do not save credentials. Changing the server clears its old credentials. Pairing codes expire after five minutes; this limits importing only.
+Set up the bridge on **Mac or Windows**. A domain with Cloudflare Tunnel + Access is recommended for everyday use; Quick Tunnel is available without a domain. Open Settings, scan the computer's QR code or enter the HTTPS server and Access Service Token / Quick Tunnel key, then test and save. Tests do not save credentials. Changing the server clears its old credentials. Pairing codes expire after five minutes; this limits importing only.
+
+Settings → Appearance offers System (default), Light, and Dark; changes apply immediately and persist across restarts. Type `/` in a conversation to browse and filter its native DSH commands. Selecting a candidate fills the input without executing it.
 
 The Kotlin/Compose client includes light/dark themes, wide-screen navigation, desktop workspaces, chat creation, archive/restore, streaming and reconnection, paged history, image upload/viewing, Markdown tables, collapsed execution activity, model/effort/permission selection, approvals and question replies. Credentials are encrypted using Android Keystore; backups are disabled. No server or credentials are bundled.
 

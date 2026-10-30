@@ -25,7 +25,13 @@ class RemoteClient(val profile: ConnectionProfile, private val transport: OkHttp
         }
     }
     private fun request(path: String): Request.Builder = Request.Builder().url(profile.server + path).apply { profile.headers().forEach { (k,v) -> header(k,v) } }
-    suspend fun call(method: String, args: JSONObject = JSONObject()): JSONObject = suspendCancellableCoroutine { continuation ->
+    suspend fun call(method: String, args: JSONObject = JSONObject()): JSONObject = callValue(method, args) as? JSONObject ?: JSONObject()
+    suspend fun commandCatalog(sessionId: String): List<CommandDescriptor> {
+        val value = callValue("commands/list", obj("agentId" to sessionId)) as? org.json.JSONArray
+            ?: error("指令列表格式异常。")
+        return CommandDescriptor.parse(value)
+    }
+    private suspend fun callValue(method: String, args: JSONObject): Any = suspendCancellableCoroutine { continuation ->
         val body = obj("type" to "client-request", "rpcId" to UUID.randomUUID().toString(), "method" to method, "payload" to obj("args" to args))
         val call = transport.newCall(request("/api/$method").post(body.toString().toRequestBody("application/json".toMediaType())).build())
         continuation.invokeOnCancellation { call.cancel() }
@@ -45,7 +51,7 @@ class RemoteClient(val profile: ConnectionProfile, private val transport: OkHttp
                         val root = try { JSONObject(buffer.readUtf8()) } catch (_: Exception) { error("服务器响应格式异常。") }
                         val result = root.optJSONObject("result") ?: error("服务器响应缺少结果。")
                         if (!result.optBoolean("ok")) error(result.child("error").optString("message", "调用失败。").take(600))
-                        result.optJSONObject("value") ?: JSONObject()
+                        result.opt("value") ?: JSONObject.NULL
                     }
                 }
                 if (continuation.isActive) result.fold({continuation.resume(it)}, {continuation.resumeWithException(it)})

@@ -43,11 +43,11 @@ Continue DSH conversations from your Mac or Windows PC on iPhone, iPad, and Andr
 
 ## Features
 
-- **Native interfaces** — Follows the system's light or dark appearance. Switch between conversations and workspaces in the sidebar, using the same DSH backend as the desktop app.
+- **Native interfaces** — Follows the system appearance by default. Choose System, Light, or Dark in sidebar **Settings → Appearance**; changes apply immediately and persist. Switch between conversations and workspaces in the sidebar, using the same DSH backend as the desktop app.
 - **Adaptive iPad layout** — Workspace/conversation sidebar and chat pane on wide windows. Narrow windows use a drawer. Rotation preserves the active chat and unsent draft.
 - **Workspaces and archive** — Expand or collapse conversations by desktop workspace. Group the conversation list by workspace or date. Archive conversations from their menu and restore them from **Archived**; changes sync with the desktop app.
 - **Streaming and Markdown** — Streaming replies, collapsible thinking and tool activity, Markdown, and horizontally scrollable tables.
-- **Native DSH commands** — Enter registered commands such as `/compact` or `/permission read-only` to run them on the desktop. Results appear in execution history; failed commands retain the draft and unknown commands report an error.
+- **Native DSH commands** — Type `/` to see registered commands for the current session and keep typing to filter. Selecting a candidate fills the composer; press Send to execute commands such as `/compact` or `/permission read-only` on the desktop. Results appear in execution history; failed commands retain the draft and unknown commands report an error.
 - **Images and local cache** — Image uploads and previews. Conversation history is cached locally, separated by server and conversation.
 - **Approvals and push** — Action approvals, questions, permission selection, and optional APNs notifications.
 - **Two connection modes** — Cloudflare Access with your own domain, or Quick Tunnel without a domain. Enter credentials manually or scan a QR code on your computer. iOS credentials stay in Keychain; Android credentials are encrypted with Keystore; neither the source nor the app contains preconfigured credentials.

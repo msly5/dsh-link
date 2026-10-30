@@ -36,10 +36,12 @@ import kotlinx.coroutines.launch
         Surface(Modifier.fillMaxWidth().fillMaxHeight(0.97f),shape=MaterialTheme.shapes.extraLarge) {
             Column(Modifier.safeDrawingPadding().imePadding()) {
                 Row(Modifier.fillMaxWidth().padding(12.dp),horizontalArrangement=Arrangement.SpaceBetween) {
-                    TextButton(onClick=close) {Text("取消")}; Text("连接设置",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=12.dp))
+                    TextButton(onClick=close) {Text("取消")}; Text("设置",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=12.dp))
                     TextButton(enabled=!testing,onClick={try {model.saveProfile(profile()); if(model.error==null) close() else error=model.error} catch(e: Exception) {error=e.message}}) {Text("保存")}
                 }
                 Column(Modifier.weight(1f).widthIn(max=600.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
+                    AppearanceSection()
+                    HorizontalDivider()
                     Text("连接你的电脑",style=MaterialTheme.typography.headlineMedium,fontFamily=FontFamily.Serif)
                     Text("连接 Mac 或 Windows 上的 DSH。凭证通过 Android Keystore 加密保存，仅用于你填写的服务器。",color=MaterialTheme.colorScheme.onSurfaceVariant)
                     Button(enabled=!testing,onClick={scanner.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.QR_CODE).setPrompt("扫描电脑上的 dsh link 连接二维码").setBeepEnabled(false).setOrientationLocked(false))},modifier=Modifier.fillMaxWidth(),contentPadding=PaddingValues(16.dp)) { Icon(Icons.Outlined.QrCodeScanner,null); Spacer(Modifier.width(10.dp)); Text("扫描连接二维码") }

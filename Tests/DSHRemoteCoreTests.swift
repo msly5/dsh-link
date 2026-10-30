@@ -302,6 +302,57 @@ final class DSHRemoteCoreTests: XCTestCase {
         XCTAssertNotNil(stream.errorText)
     }
 
+    func testCommandSuggestionsOnlyMatchTheCommandNameBeforeArguments() {
+        XCTAssertEqual(SlashCommand.suggestionQuery(in: "/"), "")
+        XCTAssertEqual(SlashCommand.suggestionQuery(in: "  /Com"), "com")
+        for line in ["hello", "/compact ", "/permission read-only", "/tmp/file.txt", "//server", "`/compact`", "/compact\n"] {
+            XCTAssertNil(SlashCommand.suggestionQuery(in: line), line)
+        }
+    }
+
+    func testCommandCatalogIsSessionScopedAndReadsNativeArray() async throws {
+        var calls = 0
+        let remote = client { request in
+            calls += 1
+            XCTAssertEqual(request.url?.host, "catalog.example.com")
+            let root = try self.body(request)
+            XCTAssertEqual(root["method"] as? String, "commands/list")
+            let args = (root["payload"] as! [String: Any])["args"] as! [String: Any]
+            XCTAssertEqual(args["agentId"] as? String, "mine")
+            return self.ok([
+                ["name": "permission", "description": "Set permissions", "input": ["hint": "preset"]],
+                ["name": "compact", "description": "Compact history"],
+                ["name": "compact", "description": "Duplicate"],
+                ["name": "../bad", "description": "Invalid"],
+            ])
+        }
+        let stream = ChatStream(sessionId: "mine", client: remote, baseURL: URL(string: "https://catalog.example.com")!, cache: nil)
+        await stream.loadCommands()
+        await stream.loadCommands()
+        XCTAssertEqual(calls, 1)
+        XCTAssertEqual(stream.commands.map(\.name), ["compact", "permission"])
+        XCTAssertEqual(stream.commands.last?.input?.hint, "preset")
+        XCTAssertNil(stream.commandsError)
+        await stream.loadCommands(force: true)
+        XCTAssertEqual(calls, 2)
+        XCTAssertFalse(stream.running)
+    }
+
+    func testCommandCatalogFailureCanRetryWithoutChangingChatError() async throws {
+        var calls = 0
+        let stream = ChatStream(sessionId: "mine", client: client { _ in
+            calls += 1
+            return calls == 1 ? self.ok(["unexpected": "object"]) : self.ok([])
+        }, cache: nil)
+        await stream.loadCommands()
+        XCTAssertNotNil(stream.commandsError)
+        XCTAssertFalse(stream.loadingCommands)
+        XCTAssertNil(stream.errorText)
+        await stream.loadCommands()
+        XCTAssertEqual(calls, 2)
+        XCTAssertNil(stream.commandsError)
+    }
+
     func testSlashCommandUsesNativeExecutorWithoutSendingPromptOrInventingModelActivity() async throws {
         var methods: [String] = []
         let remote = client { request in

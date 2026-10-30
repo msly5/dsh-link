@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.view.WindowCompat
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -38,17 +39,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState); enableEdgeToEdge()
         invitation=intent.dataString
         setContent {
-            LinkTheme {
+            val appearance = remember { AppearancePreferences(applicationContext) }
+            val dark = when (appearance.mode) {
+                AppearanceMode.SYSTEM -> isSystemInDarkTheme()
+                AppearanceMode.LIGHT -> false
+                AppearanceMode.DARK -> true
+            }
+            SideEffect {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
+                }
+            }
+            CompositionLocalProvider(LocalAppearance provides appearance) {
+            LinkTheme(dark) {
                 val model: LinkModel=viewModel()
                 LaunchedEffect(Unit) { if (BuildConfig.DEBUG && intent.getBooleanExtra("fixture",false)) model.useFixture() }
                 LinkApp(model, invitation) { invitation=null }
+            }
             }
         }
     }
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); invitation=intent.dataString }
 }
-@Composable fun LinkTheme(content: @Composable () -> Unit) {
-    val dark=isSystemInDarkTheme()
+@Composable fun LinkTheme(dark: Boolean, content: @Composable () -> Unit) {
     val colors=if(dark) darkColorScheme(primary=Color(0xFFE6E5DF),onPrimary=Color(0xFF20211E),background=Color(0xFF181917),surface=Color(0xFF181917),onSurface=Color(0xFFE8E7E1),onSurfaceVariant=Color(0xFFABAFA5),surfaceContainer=Color(0xFF232420),surfaceContainerHighest=Color(0xFF2D2F29),outlineVariant=Color(0xFF3B3D35))
     else lightColorScheme(primary=Color(0xFF252622),onPrimary=Color(0xFFFAFAF7),background=Color(0xFFFAFAF7),surface=Color(0xFFFAFAF7),onSurface=Color(0xFF252622),onSurfaceVariant=Color(0xFF797C72),surfaceContainer=Color(0xFFF0F0EB),surfaceContainerHighest=Color(0xFFE7E8E1),outlineVariant=Color(0xFFDDDFD5))
     MaterialTheme(colorScheme=colors,content=content)
@@ -97,7 +111,7 @@ class MainActivity : ComponentActivity() {
                             Text("连上你的电脑，接着上次的思路。",color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.padding(top=16.dp,bottom=30.dp))
                             Button(onClick={if(model.profile==null) settings=true else creating=true},contentPadding=PaddingValues(24.dp,15.dp)) { Icon(Icons.Outlined.Add,null); Spacer(Modifier.width(8.dp)); Text(if(model.profile==null) "连接电脑" else "新建对话") }
                         }
-                        TextButton(onClick={settings=true},modifier=Modifier.align(Alignment.CenterHorizontally).padding(bottom=26.dp)) { Icon(Icons.Outlined.Link,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("连接设置") }
+                        TextButton(onClick={settings=true},modifier=Modifier.align(Alignment.CenterHorizontally).padding(bottom=26.dp)) { Icon(Icons.Outlined.Link,null,Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("设置") }
                     } else ChatScreen(model,Modifier.weight(1f))
                 }
             }
@@ -124,7 +138,7 @@ class MainActivity : ComponentActivity() {
     val visible=model.sessions.filter { (it.id in model.archived)==showArchived && (filter.isBlank() || it.title.contains(filter,true) || it.cwd.contains(filter,true)) }
     Surface(modifier,color=MaterialTheme.colorScheme.surfaceContainer) {
         Column(Modifier.padding(horizontal=16.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top=20.dp,bottom=18.dp),verticalAlignment=Alignment.CenterVertically) { Whale(Modifier.size(32.dp)); Text("dsh link",fontSize=27.sp,fontFamily=FontFamily.Serif,modifier=Modifier.weight(1f).padding(start=10.dp)); IconButton(onClick=settings) {Icon(Icons.Outlined.Settings,"连接设置")} }
+            Row(Modifier.fillMaxWidth().padding(top=20.dp,bottom=18.dp),verticalAlignment=Alignment.CenterVertically) { Whale(Modifier.size(32.dp)); Text("dsh link",fontSize=27.sp,fontFamily=FontFamily.Serif,modifier=Modifier.weight(1f).padding(start=10.dp)); IconButton(onClick=settings) {Icon(Icons.Outlined.Settings,"设置")} }
             OutlinedTextField(filter,{filter=it},placeholder={Text("搜索会话")},leadingIcon={Icon(Icons.Outlined.Search,null)},singleLine=true,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(28.dp))
             Row(Modifier.padding(vertical=12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 FilterChip(!showArchived,{showArchived=false},label={Text("对话")})

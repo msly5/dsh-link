@@ -25,6 +25,7 @@ const server=http.createServer(async(req,res)=>{
   case 'workspace/unarchiveSession':archived.delete(r.sessionId);value={archivedSessionIds:[...archived]};break;
   case 'session/modelCatalog':value={groups:[{id:'deepseek',name:'DeepSeek',models:[{id:'deepseek-flash',name:'DeepSeek Flash',reasoning:{efforts:[{id:'high',name:'High'}]}}]}]};break;
   case 'permissionPresets/catalog':value={options:[{value:'workspace-write',name:'工作区写入'},{value:'read-only',name:'只读'}]};break;
+  case 'commands/list':value=[{name:'compact',description:'压缩当前会话的上下文'},{name:'permission',description:'查看或设置会话权限',input:{hint:'权限预设'}}];break;
   case 'commands/execute':value={result:{kind:'success'}};break;
   case 'session/selectModel':value={};break;
   case 'session/page':value={records:[event('user/message',{content:[{type:'text',text:'这是更早的一条消息。'}]},0)],hasMore:false};break;

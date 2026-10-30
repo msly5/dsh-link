@@ -8,6 +8,32 @@ import org.junit.Test
 import java.util.concurrent.TimeUnit
 
 class TransportTest {
+    @Test fun suggestionsOnlyMatchCommandNamesBeforeArguments() {
+        assertEquals("",SlashCommands.suggestionQuery("/"))
+        assertEquals("com",SlashCommands.suggestionQuery("  /Com"))
+        for(text in listOf("hello","/compact ","/permission read-only","/tmp/file.txt","//server","`/compact`","/compact\n")) {
+            assertNull(text,SlashCommands.suggestionQuery(text))
+        }
+    }
+
+    @Test fun catalogReadsSessionScopedNativeArrayAndRejectsMalformedResults() = runBlocking {
+        val server=MockWebServer();server.start()
+        val client=RemoteClient(ConnectionProfile.create(server.url("/").newBuilder().host("127.0.0.1").build().toString(),"quick_tunnel",key="a".repeat(64),allowLocalTest=true))
+        try {
+            server.enqueue(MockResponse().setBody("""{"result":{"ok":true,"value":[{"name":"permission","description":"Set permissions","input":{"hint":"preset"}},{"name":"compact","description":"Compact history"},{"name":"compact","description":"Duplicate"},{"name":"../bad","description":"Invalid"}]}}"""))
+            val catalog=client.commandCatalog("fixture")
+            assertEquals(listOf("compact","permission"),catalog.map {it.name});assertEquals("preset",catalog.last().inputHint)
+            val request=server.takeRequest()
+            assertEquals("/api/commands/list",request.path)
+            assertEquals("fixture",org.json.JSONObject(request.body.readUtf8()).child("payload").child("args").getString("agentId"))
+            server.enqueue(MockResponse().setBody("""{"result":{"ok":true,"value":{}}}"""))
+            try {client.commandCatalog("fixture");fail("Object must not be silently treated as empty catalog")} catch(_:IllegalStateException) { }
+            server.takeRequest()
+            server.enqueue(MockResponse().setBody("""{"result":{"ok":true,"value":[]}}"""))
+            assertTrue(client.commandCatalog("fixture").isEmpty())
+        } finally {client.close();server.shutdown()}
+    }
+
     @Test fun commandsUseNativeExecutorAndUnknownCommandsNeverBecomePrompts() = runBlocking {
         val server=MockWebServer(); server.start()
         val client=RemoteClient(ConnectionProfile.create(server.url("/").newBuilder().host("127.0.0.1").build().toString(),"quick_tunnel",key="a".repeat(64),allowLocalTest=true))

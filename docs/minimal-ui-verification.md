@@ -58,3 +58,13 @@
 - 预览参数仅在 Debug 生效。此次未切换用户手机的系统外观，也未重新验证真实联网流程。
 
 实机截图：[深色聊天](screens/dark-mode/iphone-chat-dark.jpg)、[深色侧栏](screens/dark-mode/iphone-sidebar-dark.jpg)、[浅色聊天](screens/dark-mode/iphone-chat-light.jpg)。
+
+## 指令候选与手动外观设置
+
+日期：2026-10-30。iPhone 13 Pro / iOS 27.0.1 真机，独立 Debug 预览；Android API 35 Pixel 模拟器连接本地虚构数据服务。
+
+- 输入 `/` 自动显示会话指令；`/comp` 仅保留 `/compact`，点选填入 `/compact ` 并收起候选，未发送或执行。候选区域限制高度并可滚动，保留输入框、发送按钮和键盘操作。
+- 设置顶部提供跟随系统、浅色、深色；初次使用默认跟随系统。手动选择立即应用到主界面与设置弹窗，无需保存连接；重启后保留选择。
+- iOS 指令目录按服务器与会话读取；Android 切换会话清除旧目录，异步响应按连接代次隔离。读取失败可以刷新重试，不覆盖聊天错误或发送草稿。
+- Swift 核心 81 项、Android JVM 9 项测试通过；新增目录数组响应、会话参数、失败重试、指令输入过滤的回归。iOS 设备签名构建与 Release 归档、Android Release 构建通过。
+- 本次新交互使用虚构会话与指令说明；未对真实会话执行压缩，也未重新验收图片发送、审批、推送或 Windows 真机。

@@ -17,6 +17,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +34,10 @@ import org.json.JSONObject
 @Composable fun ChatScreen(model: LinkModel,modifier: Modifier) {
     val list=rememberLazyListState(); val scope=rememberCoroutineScope(); val context=LocalContext.current
     var controls by remember {mutableStateOf(false)}; var choosingImages by remember {mutableStateOf(false)}
+    var composerFocused by remember {mutableStateOf(false)}
+    val composerFocus=remember {FocusRequester()}
+    val commandQuery=if(composerFocused && !model.sending) SlashCommands.suggestionQuery(model.draft) else null
+    LaunchedEffect(commandQuery!=null) {if(commandQuery!=null && model.commands.isEmpty()) model.loadCommands()}
     val picker=rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(4)) { uris ->
         if(uris.isNotEmpty()) scope.launch {
             choosingImages=true
@@ -69,6 +76,7 @@ import org.json.JSONObject
         model.pending.firstOrNull()?.let { PendingCard(it,model) }
         Surface(Modifier.widthIn(max=800.dp).fillMaxWidth().padding(12.dp),shape=RoundedCornerShape(28.dp),color=MaterialTheme.colorScheme.surfaceContainer) {
             Column(Modifier.padding(10.dp)) {
+                commandQuery?.let { query -> CommandSuggestions(model,query) {command -> model.draft="/${command.name} ";composerFocus.requestFocus()} }
                 if(model.images.isNotEmpty()) Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                     model.images.forEachIndexed {index,image ->
                         Box {
@@ -78,7 +86,7 @@ import org.json.JSONObject
                         }
                     }
                 }
-                TextField(model.draft,{model.draft=it},enabled=!model.sending,placeholder={Text("告诉 DSH 下一步做什么…")},modifier=Modifier.fillMaxWidth().heightIn(min=56.dp,max=180.dp),colors=TextFieldDefaults.colors(focusedContainerColor=MaterialTheme.colorScheme.surfaceContainer,unfocusedContainerColor=MaterialTheme.colorScheme.surfaceContainer,disabledContainerColor=MaterialTheme.colorScheme.surfaceContainer,focusedIndicatorColor=androidx.compose.ui.graphics.Color.Transparent,unfocusedIndicatorColor=androidx.compose.ui.graphics.Color.Transparent,disabledIndicatorColor=androidx.compose.ui.graphics.Color.Transparent))
+                TextField(model.draft,{model.draft=it},enabled=!model.sending,placeholder={Text("告诉 DSH 下一步做什么…")},modifier=Modifier.fillMaxWidth().focusRequester(composerFocus).onFocusChanged {composerFocused=it.isFocused}.heightIn(min=56.dp,max=180.dp),colors=TextFieldDefaults.colors(focusedContainerColor=MaterialTheme.colorScheme.surfaceContainer,unfocusedContainerColor=MaterialTheme.colorScheme.surfaceContainer,disabledContainerColor=MaterialTheme.colorScheme.surfaceContainer,focusedIndicatorColor=androidx.compose.ui.graphics.Color.Transparent,unfocusedIndicatorColor=androidx.compose.ui.graphics.Color.Transparent,disabledIndicatorColor=androidx.compose.ui.graphics.Color.Transparent))
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
                     IconButton(enabled=!model.sending && !choosingImages && model.images.size<4,onClick={picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))}) {Icon(Icons.Outlined.AddPhotoAlternate,"添加图片")}
                     TextButton(onClick={controls=true},modifier=Modifier.weight(1f)) {

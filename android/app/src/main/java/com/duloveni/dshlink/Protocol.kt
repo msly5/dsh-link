@@ -12,7 +12,17 @@ fun JSONObject.child(key: String) = optJSONObject(key) ?: JSONObject()
 
 enum class SubmissionKind { PROMPT, COMMAND }
 object SlashCommands {
+    fun suggestionQuery(text: String): String? = text.trimStart().takeIf { Regex("^/[a-zA-Z0-9_-]*$").matches(it) }?.drop(1)?.lowercase(java.util.Locale.ROOT)
     fun name(text: String) = Regex("^/([a-z][a-z0-9_-]*)(?=$|[\\t\\n\\r ])").find(text.trim())?.groupValues?.get(1)
+}
+
+data class CommandDescriptor(val name: String, val description: String, val inputHint: String?) {
+    companion object {
+        fun parse(value: JSONArray): List<CommandDescriptor> = (0 until value.length()).map { index ->
+            val item = value.getJSONObject(index)
+            CommandDescriptor(item.getString("name"), item.getString("description"), item.optJSONObject("input")?.optString("hint"))
+        }.filter { Regex("[a-z][a-z0-9_-]*").matches(it.name) }.distinctBy { it.name }.sortedBy { it.name }
+    }
 }
 
 data class Session(val id: String, val title: String, val cwd: String, val running: Boolean, val updated: Long, val values: JSONObject) {
