@@ -302,6 +302,65 @@ final class DSHRemoteCoreTests: XCTestCase {
         XCTAssertNotNil(stream.errorText)
     }
 
+    func testSlashCommandUsesNativeExecutorWithoutSendingPromptOrInventingModelActivity() async throws {
+        var methods: [String] = []
+        let remote = client { request in
+            let root = try self.body(request)
+            let method = root["method"] as! String
+            methods.append(method)
+            if method == "session/list" { return self.ok(["items": []]) }
+            XCTAssertEqual(method, "commands/execute")
+            XCTAssertEqual(request.timeoutInterval, 180)
+            let args = (root["payload"] as! [String: Any])["args"] as! [String: Any]
+            XCTAssertEqual(args["agentId"] as? String, "mine")
+            XCTAssertEqual(args["line"] as? String, "/compact")
+            XCTAssertEqual((args["submittedAttachments"] as? [Any])?.count, 0)
+            return self.ok(["commandId": "test-command", "result": ["kind": "success", "text": "No compactable history yet."]])
+        }
+        let stream = ChatStream(sessionId: "mine", client: remote, cache: nil)
+        try snapshot(stream, cursor: 0)
+        let sent = await stream.submitPrompt("  /compact \n")
+        XCTAssertTrue(sent)
+        XCTAssertFalse(methods.contains("session/prompt"))
+        XCTAssertFalse(stream.running)
+        XCTAssertFalse(stream.executingCommand)
+        XCTAssertNil(stream.errorText)
+    }
+
+    func testRejectedOrUnknownCommandReturnsFailureWithoutModelFallback() async throws {
+        for value: [String: Any] in [["result": ["kind": "error", "text": "Agent is busy"]], [:]] {
+            var calls = 0
+            let remote = client { request in
+                calls += 1
+                XCTAssertEqual(try self.body(request)["method"] as? String, "commands/execute")
+                return self.ok(value)
+            }
+            let stream = ChatStream(sessionId: "mine", client: remote, cache: nil)
+            try snapshot(stream, cursor: 0)
+            let sent = await stream.submitPrompt("/compact")
+            XCTAssertFalse(sent, "The composer must retain the draft on failure")
+            XCTAssertEqual(calls, 1)
+            XCTAssertFalse(stream.running)
+            XCTAssertFalse(stream.executingCommand)
+            XCTAssertNotNil(stream.errorText)
+        }
+    }
+
+    func testSlashGrammarPreservesPathsAndQuotedCommandsAsOrdinaryText() async throws {
+        for line in ["/tmp/example.txt", "//host/share", "Explain /compact", "`/compact`", "/Users"] {
+            XCTAssertNil(SlashCommand.name(in: line))
+            let stream = ChatStream(sessionId: "mine", client: client { request in
+                XCTAssertEqual(try self.body(request)["method"] as? String, "session/prompt")
+                return self.ok(["accepted": true])
+            }, cache: nil)
+            try snapshot(stream, cursor: 0)
+            let sent = await stream.submitPrompt(line)
+            XCTAssertTrue(sent)
+        }
+        XCTAssertEqual(SlashCommand.name(in: "/permission read-only"), "permission")
+        XCTAssertEqual(SlashCommand.name(in: "/compact\nextra"), "compact")
+    }
+
     func testPermissionChangesCurrentSessionWithoutMutatingGlobalSettings() async throws {
         let remote = client { request in
             let root = try self.body(request)

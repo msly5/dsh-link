@@ -34,7 +34,7 @@ Continue DSH conversations from your Mac or Windows PC on iPhone, iPad, and Andr
 
 | Device / host | Installation | Verification scope |
 | --- | --- | --- |
-| iPhone / iPad | [TestFlight](https://testflight.apple.com/join/KqMhXcHS), or build with Xcode | Existing physical-device testing and external beta 1.0 (8) |
+| iPhone / iPad | [TestFlight](https://testflight.apple.com/join/KqMhXcHS), or build with Xcode | Existing physical-device validation; see TestFlight for the current build |
 | Android 8.0+ | [Signed APK](https://github.com/msly5/dsh-link/releases/latest) · [Android guide](docs/android.md#english) | New Kotlin / Compose client; emulator validation, no physical Android validation yet |
 | macOS + DSH | Bridge setup below | Verified against running DSH |
 | Windows 10/11 + DSH | [Windows setup](docs/windows.md#english), including Access, Quick Tunnel, and native QR pairing | Ported bridge with Windows automation; real Windows DSH end-to-end validation pending |
@@ -47,6 +47,7 @@ Continue DSH conversations from your Mac or Windows PC on iPhone, iPad, and Andr
 - **Adaptive iPad layout** — Workspace/conversation sidebar and chat pane on wide windows. Narrow windows use a drawer. Rotation preserves the active chat and unsent draft.
 - **Workspaces and archive** — Expand or collapse conversations by desktop workspace. Group the conversation list by workspace or date. Archive conversations from their menu and restore them from **Archived**; changes sync with the desktop app.
 - **Streaming and Markdown** — Streaming replies, collapsible thinking and tool activity, Markdown, and horizontally scrollable tables.
+- **Native DSH commands** — Enter registered commands such as `/compact` or `/permission read-only` to run them on the desktop. Results appear in execution history; failed commands retain the draft and unknown commands report an error.
 - **Images and local cache** — Image uploads and previews. Conversation history is cached locally, separated by server and conversation.
 - **Approvals and push** — Action approvals, questions, permission selection, and optional APNs notifications.
 - **Two connection modes** — Cloudflare Access with your own domain, or Quick Tunnel without a domain. Enter credentials manually or scan a QR code on your computer. iOS credentials stay in Keychain; Android credentials are encrypted with Keystore; neither the source nor the app contains preconfigured credentials.

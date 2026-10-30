@@ -34,7 +34,7 @@
 
 | 手机 / 电脑 | 使用方式 | 验证范围 |
 | --- | --- | --- |
-| iPhone / iPad | [TestFlight](https://testflight.apple.com/join/KqMhXcHS)，或 Xcode 自行构建 | 已有真机与外部测试版本 1.0 (8) |
+| iPhone / iPad | [TestFlight](https://testflight.apple.com/join/KqMhXcHS)，或 Xcode 自行构建 | 已有真机验证；最新构建见 TestFlight |
 | Android 8.0+ | [下载 APK](https://github.com/msly5/dsh-link/releases/latest) · [Android 指南](docs/android.md) | 新增 Kotlin / Compose 客户端，模拟器验证；尚未做 Android 真机验收 |
 | macOS + DSH | 按下文配置桥接 | 已验证真实 DSH 连接 |
 | Windows 10/11 + DSH | [Windows 配置指南](docs/windows.md)，支持同样的 Access / Quick Tunnel / 扫码 | 已补桥接适配和 Windows 自动化测试，真实 Windows DSH 连接待验证 |
@@ -47,6 +47,7 @@
 - **自适应 iPad** — 宽屏使用工作区 / 会话侧栏与聊天双栏，支持横竖屏；窄窗口自动切换抽屉侧栏，旋转保留当前聊天和输入草稿。
 - **工作区与归档** — 侧栏按桌面工作区展开 / 收起会话；对话列表可按工作区或时间分组。会话菜单支持归档，侧栏「已归档」可查看和恢复，状态同步到桌面端。
 - **流式与 Markdown** — 流式回复、可折叠的思考与工具执行记录、Markdown、可横向滚动的完整表格。
+- **DSH 原生命令** — 输入 `/compact`、`/permission read-only` 等当前 DSH 已注册的指令，直接交给电脑端执行。指令结果出现在执行记录中，失败保留输入；未知指令会报错。
 - **图片与缓存** — 图片上传与查看；iOS 提供磁盘缓存，Android 首版使用内存缓存，按服务器和会话分隔。
 - **审批与推送** — 会话审批、提问及权限选择；iOS 可选 APNs 通知。
 - **两种连接方式** — 支持有域名的 Cloudflare Access 和免域名的 Quick Tunnel；可手动填写或扫描电脑二维码导入连接；iOS 凭证保存在 Keychain，Android 凭证通过 Keystore 加密保存，源码和 App 内没有预置凭证。

@@ -10,6 +10,11 @@ fun JSONObject.objects(key: String) = optJSONArray(key)?.objects().orEmpty()
 fun JSONObject.strings(key: String) = optJSONArray(key)?.strings().orEmpty()
 fun JSONObject.child(key: String) = optJSONObject(key) ?: JSONObject()
 
+enum class SubmissionKind { PROMPT, COMMAND }
+object SlashCommands {
+    fun name(text: String) = Regex("^/([a-z][a-z0-9_-]*)(?=$|[\\t\\n\\r ])").find(text.trim())?.groupValues?.get(1)
+}
+
 data class Session(val id: String, val title: String, val cwd: String, val running: Boolean, val updated: Long, val values: JSONObject) {
     companion object {
         fun parse(o: JSONObject): Session {
@@ -39,6 +44,13 @@ object Events {
     }
     fun parse(event: JSONObject): List<ChatRow> {
         val type = event.optString("type"); val seq = event.optInt("seq"); val data = event.optJSONObject("data") ?: event
+        if (type == "command/run" || type == "command/done") {
+            val id=data.optString("commandId"); if(id.isEmpty()) return emptyList()
+            val name=data.optString("name").takeIf { it.isNotEmpty() }?.let { "/$it" }
+            return listOf(ChatRow("command:$id",seq,"tool",data.optString("text"),
+                name ?: if(data.optString("kind")=="error") "指令执行失败" else "指令结果",
+                name?.let {it+data.optString("args")}.orEmpty()))
+        }
         if (type == "tool/call") {
             val call = data.optString("callId"); if (call.isEmpty()) return emptyList()
             val args = data.opt("arguments")?.toString().orEmpty()

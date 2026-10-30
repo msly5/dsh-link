@@ -63,6 +63,9 @@ struct ExecutionActivity: Codable, Hashable, Sendable {
     }
 
     func summary(output: String) -> String {
+        if name?.hasPrefix("/") == true, phase != .running, !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return Self.singleLine(output)
+        }
         if name == "job_kill", phase == .completed, output.contains("requested cancellation of job ") {
             return summary + " · 已请求取消"
         }

@@ -17,11 +17,11 @@ actor RemoteClient {
         self.credentials = credentials
     }
 
-    func call(_ method: String, args: [String: Any], baseURL: URL? = nil, upload: Bool = false, credentials: ConnectionProfile? = nil) async throws -> Any {
+    func call(_ method: String, args: [String: Any], baseURL: URL? = nil, upload: Bool = false, credentials: ConnectionProfile? = nil, timeout: TimeInterval? = nil) async throws -> Any {
         let server = baseURL ?? AppConfig.baseURL
         var req = URLRequest(url: server.appending(path: "api/\(method)"))
         req.httpMethod = "POST"
-        req.timeoutInterval = upload ? 120 : 30
+        req.timeoutInterval = timeout ?? (upload ? 120 : 30)
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         for (k, v) in ((credentials ?? self.credentials)?.headers(for: server) ?? AppConfig.accessHeaders(for: server)) {
             req.setValue(v, forHTTPHeaderField: k)
@@ -117,6 +117,20 @@ actor RemoteClient {
         ], upload: !images.isEmpty)
         guard (value as? [String: Any])?["accepted"] as? Bool == true else {
             throw RemoteError(message: "服务器未确认接收，文字和图片已保留，请稍后重试。")
+        }
+    }
+
+    func executeCommand(sessionId: String, line: String, images: [ImageAttachment] = []) async throws {
+        let line = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let name = SlashCommand.name(in: line) else { throw RemoteError(message: "指令格式无效。") }
+        let value = try await call("commands/execute", args: [
+            "agentId": sessionId, "line": line, "submittedAttachments": images.map(\.content),
+        ], upload: !images.isEmpty, timeout: 180)
+        guard let result = (value as? [String: Any])?["result"] as? [String: Any] else {
+            throw RemoteError(message: "未知或格式错误的指令：/\(name)。")
+        }
+        guard result["kind"] as? String == "success" else {
+            throw RemoteError(message: result["text"] as? String ?? "指令执行失败。")
         }
     }
 

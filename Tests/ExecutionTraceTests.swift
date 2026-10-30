@@ -38,6 +38,31 @@ final class ExecutionTraceTests: XCTestCase {
         XCTAssertEqual(command.text, "build succeeded")
     }
 
+    func testNativeCommandLifecycleHasOnePersistentResultAndNoModelTurn() throws {
+        let stream = ChatStream(sessionId: "test", cache: nil)
+        try send(["type": "snapshot", "cursor": 0, "records": []], to: stream)
+        let start: [String: Any] = ["type": "command/run", "seq": 1, "data": ["commandId": "compact-one", "name": "compact", "args": ""]]
+        try send(["type": "event", "event": start], to: stream)
+        XCTAssertTrue(stream.executingCommand)
+        XCTAssertFalse(stream.running)
+        XCTAssertEqual(stream.messages.first?.activity?.phase, .running)
+        let done: [String: Any] = ["type": "command/done", "seq": 2, "data": ["commandId": "compact-one", "kind": "success", "text": "Compacted 8 history items (~4000 tokens)."]]
+        try send(["type": "event", "event": done], to: stream)
+        XCTAssertFalse(stream.executingCommand)
+        XCTAssertEqual(stream.messages.count, 1)
+        XCTAssertEqual(stream.messages.first?.activity?.title, "/compact")
+        XCTAssertEqual(stream.messages.first?.activity?.phase, .completed)
+        XCTAssertEqual(stream.messages.first?.text, "Compacted 8 history items (~4000 tokens).")
+        try send(["type": "snapshot", "cursor": 2, "records": [start, done]], to: stream)
+        XCTAssertEqual(stream.messages.count, 1)
+        XCTAssertEqual(stream.messages.first?.activity?.input, "/compact")
+        var failure = done
+        failure["seq"] = 3
+        failure["data"] = ["commandId": "compact-one", "kind": "error", "text": "Compaction cancelled."]
+        try send(["type": "event", "event": failure], to: stream)
+        XCTAssertEqual(stream.messages.first?.activity?.phase, .failed)
+    }
+
     func testLiveParallelResultsKeepCallOrderAndFailureStatus() throws {
         let stream = ChatStream(sessionId: "test", cache: nil)
         try send(["type": "snapshot", "cursor": 0, "records": []], to: stream)

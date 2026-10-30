@@ -52,6 +52,26 @@ class RemoteClient(val profile: ConnectionProfile, private val transport: OkHttp
             }
         })
     }
+    suspend fun submit(sessionId: String, text: String, images: List<PendingImage>, requestId: String): SubmissionKind {
+        val line=text.trim()
+        require(line.isNotEmpty() || images.isNotEmpty()) { "请先输入文字或选择图片。" }
+        val command=SlashCommands.name(line)
+        if(command!=null) {
+            val execution=call("commands/execute",obj("agentId" to sessionId,"line" to line,
+                "submittedAttachments" to org.json.JSONArray().apply {images.forEach {put(it.content())}}))
+            val result=execution.optJSONObject("result") ?: error("未知或格式错误的指令：/$command。")
+            check(result.optString("kind")=="success") {result.optString("text").ifBlank {"指令执行失败。"}}
+            return SubmissionKind.COMMAND
+        }
+        val content=org.json.JSONArray().apply {
+            if(line.isNotEmpty()) put(obj("type" to "text","text" to line))
+            images.forEach {put(it.content())}
+        }
+        val result=call("session/prompt",obj("request" to obj("requestId" to requestId,"sessionId" to sessionId,
+            "mode" to "queue","content" to content,"clientTimeZone" to java.util.TimeZone.getDefault().id)))
+        check(result.optBoolean("accepted")) {"服务器未确认接收，输入已保留。"}
+        return SubmissionKind.PROMPT
+    }
     suspend fun sessions() = call("session/list", obj("_request" to JSONObject())).objects("items").map(Session::parse).sortedByDescending { it.updated }
     fun socket(listener: WebSocketListener) = transport.newWebSocket(request("/api/remote.mux").build(), listener)
     suspend fun workspace(): JSONObject = withTimeout(20000) {

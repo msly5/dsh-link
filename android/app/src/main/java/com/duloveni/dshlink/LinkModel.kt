@@ -224,10 +224,12 @@ class LinkModel(app: Application) : AndroidViewModel(app) {
         sending=true; error=null
         viewModelScope.launch {
             try {
-                val content=JSONArray(); if (text.isNotEmpty()) content.put(obj("type" to "text","text" to text)); attachments.forEach { content.put(it.content()) }
-                val result=api.call("session/prompt",obj("request" to obj("requestId" to requestId,"sessionId" to id,"mode" to "queue","content" to content,"clientTimeZone" to java.util.TimeZone.getDefault().id)))
-                check(result.optBoolean("accepted")) { "服务器未确认接收，输入已保留。" }
-                if (token==generation) { draft=""; images=emptyList(); promptId=""; if(activityAtSend==activityRevision) running=true; drafts.remove(id) }
+                val kind=api.submit(id,text,attachments,requestId)
+                if (token==generation) {
+                    draft=""; images=emptyList(); promptId=""; drafts.remove(id)
+                    if(kind==SubmissionKind.PROMPT && activityAtSend==activityRevision) running=true
+                    if(kind==SubmissionKind.COMMAND) refresh()
+                }
             } catch(e: Exception) { if (token==generation) failure(e) }
             finally { if (token==generation) sending=false }
         }

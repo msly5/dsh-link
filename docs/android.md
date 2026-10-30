@@ -4,7 +4,7 @@
 
 ## 安装与连接
 
-1. 从 [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest) 下载 `dsh-link-android-1.0.0.apk`。支持 Android 8.0+（API 26）。这是签名的 Release 包，不需要 Android Studio。
+1. 从 [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest) 下载 `dsh-link-android-1.0.1.apk`。支持 Android 8.0+（API 26）。这是签名的 Release 包，不需要 Android Studio。
 2. 打开 APK，按系统提示仅为当前浏览器或文件管理器允许安装；安装完成后可关闭该权限。后续版本用同一签名覆盖安装。
 3. 在 Mac 或 Windows 配好桥接。长期使用推荐**域名 + Cloudflare Tunnel + Access**；无域名可用 Quick Tunnel。
 4. 手机进入「连接设置」，扫描电脑二维码或手动填写。Access 填 HTTPS 地址、Client ID、Client Secret；Quick Tunnel 填临时 HTTPS 地址、连接密钥。
@@ -57,7 +57,7 @@ Release 不接受 fixture 配置，禁止明文 HTTP，且不会自动加载远�
 
 ## English
 
-Download the signed `dsh-link-android-1.0.0.apk` from [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest) on Android 8.0+. Allow installation for the app opening the APK, install, and optionally revoke that permission afterward. Future releases use the same signing key.
+Download the signed `dsh-link-android-1.0.1.apk` from [GitHub Releases](https://github.com/msly5/dsh-link/releases/latest) on Android 8.0+. Allow installation for the app opening the APK, install, and optionally revoke that permission afterward. Future releases use the same signing key.
 
 Set up the bridge on **Mac or Windows**. A domain with Cloudflare Tunnel + Access is recommended for everyday use; Quick Tunnel is available without a domain. Open connection settings, scan the computer's QR code or enter the HTTPS server and Access Service Token / Quick Tunnel key, then test and save. Tests do not save credentials. Changing the server clears its old credentials. Pairing codes expire after five minutes; this limits importing only.
 

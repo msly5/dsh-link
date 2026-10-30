@@ -92,6 +92,23 @@ final class ImageAttachmentTests: XCTestCase {
         XCTAssertEqual(calls, 2)
     }
 
+    func testCommandAttachmentsReachNativeAdmissionAndAreNotSentAsChat() async throws {
+        let image = try ImagePreparation.prepare(imageData())
+        let remote = client { request in
+            let root = try self.body(request)
+            XCTAssertEqual(root["method"] as? String, "commands/execute")
+            let args = (root["payload"] as! [String: Any])["args"] as! [String: Any]
+            let attachments = args["submittedAttachments"] as! [[String: Any]]
+            XCTAssertEqual(attachments.count, 1)
+            XCTAssertEqual(Data(base64Encoded: attachments[0]["data"] as! String), image.data)
+            return (200, ["result": ["ok": true, "value": ["commandId": "rejected", "result": ["kind": "error", "text": "/compact does not accept attachments"]]]])
+        }
+        do {
+            try await remote.executeCommand(sessionId: "mine", line: "/compact", images: [image])
+            XCTFail("Native attachment rejection must preserve the command draft")
+        } catch { XCTAssertEqual(error.localizedDescription, "/compact does not accept attachments") }
+    }
+
     func testImageOnlyHistoryIsVisibleAndOldTextCachesStillDecode() throws {
         let event: [String: Any] = ["type": "user/message", "seq": 9, "data": ["content": [[
             "type": "image", "attachment": ["attachmentId": "sha256:test", "mediaType": "image/png", "name": "test.png"],

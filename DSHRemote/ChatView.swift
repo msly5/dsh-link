@@ -143,10 +143,10 @@ struct ChatView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             if item.isToolGroup && item.messages.count > 1 {
                                 ToolResultGroupView(messages: item.messages, sessionId: session.sessionId, serverURL: serverURL,
-                                                    active: stream.connected && stream.running)
+                                                    active: stream.connected && (stream.running || stream.executingCommand))
                             } else if let message = item.messages.first, item.isToolGroup {
                                 ExecutionRow(message: message, sessionId: session.sessionId, serverURL: serverURL,
-                                             active: stream.connected && stream.running)
+                                             active: stream.connected && (stream.running || stream.executingCommand))
                             } else if let message = item.messages.first {
                                 MessageRow(message: message, sessionId: session.sessionId, serverURL: serverURL)
                             }

@@ -24,11 +24,14 @@ final class ChatStream: ObservableObject {
     @Published private(set) var modelGroups: [ModelProviderGroup] = []
     @Published private(set) var updatingSelection = false
     @Published private(set) var cancelling = false
+    @Published private var submittingCommand = false
+    @Published private var activeCommandIds = Set<String>()
     @Published private var approvals: [ApprovalPrompt] = []
     @Published private var questions: [QuestionPrompt] = []
     @Published private var answering = Set<String>()
 
     var pendingApproval: ApprovalPrompt? { approvals.first }
+    var executingCommand: Bool { submittingCommand || !activeCommandIds.isEmpty }
     var pendingQuestions: QuestionPrompt? { questions.first }
     var answeringApproval: Bool { pendingApproval.map { answering.contains($0.id) } ?? false }
     var answeringQuestions: Bool { pendingQuestions.map { answering.contains($0.id) } ?? false }
@@ -131,6 +134,7 @@ final class ChatStream: ObservableObject {
         approvals.removeAll()
         questions.removeAll()
         answering.removeAll()
+        activeCommandIds.removeAll()
         historyGeneration += 1
 
         var request = URLRequest(url: AppConfig.webSocketURL(for: serverURL))
@@ -275,6 +279,7 @@ final class ChatStream: ObservableObject {
             if let values = (value["projections"] as? [String: Any])?["values"] as? [String: Any] {
                 applyProjection(values)
             }
+            activeCommandIds.removeAll()
             for record in records {
                 guard let event = EventParser.event(from: record) else { continue }
                 applyActivity(event)
@@ -328,6 +333,10 @@ final class ChatStream: ObservableObject {
     }
 
     private func applyActivity(_ event: [String: Any]) {
+        if let payload = event["data"] as? [String: Any], let id = payload["commandId"] as? String {
+            if event["type"] as? String == "command/run" { activeCommandIds.insert(id) }
+            if event["type"] as? String == "command/done" { activeCommandIds.remove(id) }
+        }
         switch event["type"] as? String {
         case "turn/start", "step/start": running = true
         case "turn/end": running = false; liveText = ""; liveReasoning = ""; attemptId = nil
@@ -446,13 +455,22 @@ final class ChatStream: ObservableObject {
         errorText = nil
         do {
             try imageLimits.validate(images)
+            if SlashCommand.name(in: text) != nil {
+                submittingCommand = true
+                defer { submittingCommand = false }
+                try await client.executeCommand(sessionId: sessionId, line: text, images: images)
+                await refreshSessionMeta()
+                return true
+            }
             let revision = activityRevision
             try await client.prompt(sessionId: sessionId, text: text, images: images, requestId: requestId)
             if revision == activityRevision { running = true }
             return true
         } catch {
             if (error as? URLError)?.code == .timedOut {
-                errorText = "发送超时，文字和图片已保留，请检查网络后重试。"
+                errorText = SlashCommand.name(in: text) != nil
+                    ? "指令等待超时，输入已保留。请先查看执行记录，确认结果后再重试。"
+                    : "发送超时，文字和图片已保留，请检查网络后重试。"
             } else { errorText = error.localizedDescription }
             return false
         }

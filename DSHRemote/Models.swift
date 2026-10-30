@@ -132,6 +132,16 @@ enum EventParser {
         let seq = event["seq"] as? Int ?? fallbackSeq
         let payload = event["data"] as? [String: Any] ?? event
         switch event["type"] as? String {
+        case "command/run", "command/done":
+            guard let id = payload["commandId"] as? String else { return [] }
+            let started = event["type"] as? String == "command/run"
+            let name = (payload["name"] as? String).map { "/" + $0 }
+            let input = name.map { $0 + ((payload["args"] as? String) ?? "") }
+            let arguments = input.flatMap { try? JSONSerialization.data(withJSONObject: ["command": $0]) }
+                .map { String(decoding: $0, as: UTF8.self) }
+            return [ChatMessage(id: "command:" + id, seq: seq, role: .tool, text: payload["text"] as? String ?? "",
+                                activity: ExecutionActivity(kind: .tool, name: name, arguments: arguments,
+                                                            phase: started ? .running : payload["kind"] as? String == "error" ? .failed : .completed))]
         case "tool/call":
             guard let callId = payload["callId"] as? String, let name = payload["name"] as? String else { return [] }
             let arguments: String?
